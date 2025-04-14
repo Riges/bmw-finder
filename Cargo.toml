@@ -1,0 +1,8 @@
+[package]
+name = "bmw_finder"
+version = "0.1.0"
+edition = "2024"
+description = "A CLI tool to search for BMW cars in stock with advanced filtering options."
+
+[dependencies]
+clap = { version = "4.5.36", features = ["derive"] }
