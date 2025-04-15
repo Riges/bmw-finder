@@ -1,4 +1,4 @@
-use std::u8;
+use std::{collections::HashMap, u8};
 
 use anyhow::Result;
 use futures::{StreamExt, stream};
@@ -106,7 +106,7 @@ struct Hit {
     vehicle: Vehicle,
 }
 
-pub async fn search_cars(new_car: bool, count: u32) -> Result<Vec<Vehicle>> {
+pub async fn search_cars(new_car: bool, count: u32) -> Result<HashMap<uuid::Uuid, Vehicle>> {
     let request_body: SearchRequest = SearchRequest {
         search_context: vec![SearchContext {
             model: SearchModel {
@@ -140,13 +140,15 @@ pub async fn search_cars(new_car: bool, count: u32) -> Result<Vec<Vehicle>> {
         .map(|start_index| query_search(new_car, step, start_index, &request_body))
         .buffer_unordered(CONCURRENT_REQUESTS);
 
-    let mut vehicles: Vec<Vehicle> = Vec::new();
+    let mut vehicles = HashMap::new();
 
     responses
         .for_each(|response| {
             match response {
                 Ok(res) => {
-                    vehicles.extend(res.hits.into_iter().map(|hit| hit.vehicle));
+                    res.hits.into_iter().for_each(|hit| {
+                        vehicles.insert(hit.vehicle.vss_id, hit.vehicle);
+                    });
                 }
                 Err(e) => {
                     eprintln!("Error: {}", e);
@@ -156,7 +158,7 @@ pub async fn search_cars(new_car: bool, count: u32) -> Result<Vec<Vehicle>> {
         })
         .await;
 
-    Ok(vehicles.to_vec())
+    Ok(vehicles)
 }
 
 async fn query_search(
