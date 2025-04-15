@@ -38,12 +38,16 @@ async fn main() {
 
     let price_sorted_car = sort_by_price(cars);
 
-    println!("{0: <36} | {1: <12} | {2}", "Id", "Price", "Link");
+    println!(
+        "{0: <36} | {1: <12} | {2: <8} | {3}",
+        "Id", "Price", "Discount", "Link"
+    );
     for car in price_sorted_car {
         println!(
-            "{0: <36} | {1: <12} | {2}",
+            "{0: <36} | {1: <12} | {2: <8} | {3}",
             car.vss_id,
             format!("{:.2} €", car.get_price().unwrap_or_default()),
+            format!("{:.2} %", car.get_discount_percentage().unwrap_or_default()),
             car.get_link()
         );
     }
