@@ -17,8 +17,12 @@ struct Args {
     used: bool,
 
     /// Maximum number of results to return
-    #[arg(short, long, default_value_t = 100)]
+    #[arg(short, long, default_value_t = 150)]
     count: u32,
+
+    /// Equipment filter on all found cars
+    #[arg(long)]
+    filter_equipment: Option<Vec<String>>,
 }
 
 #[tokio::main]
@@ -32,7 +36,6 @@ async fn main() {
         if new_car { "new" } else { "used" }
     );
 
-    // replaced unstable usage with stable format macros
     let cars = search_cars(new_car, args.count).await.unwrap();
     print!("Found {} cars:\n", cars.len());
 
@@ -42,7 +45,21 @@ async fn main() {
         "{0: <36} | {1: <12} | {2: <8} | {3}",
         "Id", "Price", "Discount", "Link"
     );
+
     for car in price_sorted_car {
+        // filter by equipment name
+        if let Some(filter_equipment) = &args.filter_equipment {
+            if !filter_equipment
+                .iter()
+                .any(|name| car.has_equipment_name_like(name))
+            {
+                continue;
+            }
+        }
+        // if !car.has_equipment_name_like("Pack Innovation") {
+        //     continue;
+        // }
+
         println!(
             "{0: <36} | {1: <12} | {2: <8} | {3}",
             car.vss_id,

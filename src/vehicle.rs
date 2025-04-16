@@ -51,9 +51,28 @@ impl Vehicle {
     }
 
     pub fn get_discount_percentage(&self) -> Option<f32> {
-        let default_price = self.price.vehicle_net_price;
+        let default_price = self.price.vehicle_gross_price;
         let offer_price = self.get_price()?;
         Some((default_price - offer_price) / default_price * 100.0)
+    }
+
+    pub fn has_equipment_name_like(&self, name: &str) -> bool {
+        if name.is_empty() {
+            return false;
+        }
+
+        let name = &name.to_lowercase();
+
+        self.vehicle_specification
+            .model_and_option
+            .equipments
+            .iter()
+            .any(|(_, equipment)| {
+                equipment
+                    .name
+                    .iter()
+                    .any(|(_, value)| value.to_lowercase().contains(name))
+            })
     }
 }
 
@@ -89,11 +108,8 @@ struct Equipment {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct VehiclePrice {
-    #[serde(rename = "equipmentsTotalPrice")]
-    equipments_total_price: f32,
-
-    #[serde(rename = "vehicleNetPrice")]
-    vehicle_net_price: f32,
+    #[serde(rename = "vehicleGrossPrice")]
+    vehicle_gross_price: f32,
 }
 
 #[cfg(test)]
@@ -109,8 +125,7 @@ mod tests {
             ordering_uuid: Some(Uuid::new_v4()),
             offering: Offering { offer_prices: None },
             price: VehiclePrice {
-                equipments_total_price: 0.0,
-                vehicle_net_price: 0.0,
+                vehicle_gross_price: 0.0,
             },
             vehicle_specification: VehicleSpecification {
                 model_and_option: ModelAndOption {
@@ -145,8 +160,7 @@ mod tests {
                     )])),
                 },
                 price: VehiclePrice {
-                    equipments_total_price: 0.0,
-                    vehicle_net_price: 0.0,
+                    vehicle_gross_price: 0.0,
                 },
                 vehicle_specification: VehicleSpecification {
                     model_and_option: ModelAndOption {
@@ -166,8 +180,7 @@ mod tests {
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
                 price: VehiclePrice {
-                    equipments_total_price: 0.0,
-                    vehicle_net_price: 0.0,
+                    vehicle_gross_price: 0.0,
                 },
                 vehicle_specification: VehicleSpecification {
                     model_and_option: ModelAndOption {
@@ -199,8 +212,7 @@ mod tests {
                     )])),
                 },
                 price: VehiclePrice {
-                    equipments_total_price: 0.0,
-                    vehicle_net_price: 100.0,
+                    vehicle_gross_price: 100.0,
                 },
                 vehicle_specification: VehicleSpecification {
                     model_and_option: ModelAndOption {
@@ -220,8 +232,7 @@ mod tests {
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
                 price: VehiclePrice {
-                    equipments_total_price: 0.0,
-                    vehicle_net_price: 0.0,
+                    vehicle_gross_price: 0.0,
                 },
                 vehicle_specification: VehicleSpecification {
                     model_and_option: ModelAndOption {
@@ -231,6 +242,61 @@ mod tests {
             };
 
             assert_eq!(vehicle.get_discount_percentage(), None);
+        }
+    }
+
+    mod has_equipment_name_like {
+        use super::*;
+        use uuid::Uuid;
+
+        #[test]
+        fn should_return_true_if_name_exists() {
+            let vehicle = Vehicle {
+                document_id: "12345".to_string(),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering { offer_prices: None },
+                price: VehiclePrice {
+                    vehicle_gross_price: 0.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::from([(
+                            "TEST42".to_string(),
+                            Equipment {
+                                name: HashMap::from([
+                                    ("default_FR".to_string(), "Test asdasdasd".to_string()),
+                                    ("fr_FR".to_string(), "Another name".to_string()),
+                                ]),
+                            },
+                        )]),
+                    },
+                },
+            };
+
+            let result = vehicle.has_equipment_name_like("Test");
+
+            assert_eq!(result, true);
+        }
+
+        #[test]
+        fn should_return_false_if_name_doesnt_exist() {
+            let vehicle = Vehicle {
+                document_id: "12345".to_string(),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering { offer_prices: None },
+                price: VehiclePrice {
+                    vehicle_gross_price: 0.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::new(),
+                    },
+                },
+            };
+
+            assert_eq!(vehicle.has_equipment_name_like("Test"), false);
         }
     }
 }
