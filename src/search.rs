@@ -13,7 +13,7 @@ use crate::{
 const NEW_CAR_URL: &str = "https://stolo-data-service.prod.stolo.eu-central-1.aws.bmw.cloud/vehiclesearch/search/fr-fr/stocklocator";
 const USED_CAR_URL: &str = "https://stolo-data-service.prod.stolo.eu-central-1.aws.bmw.cloud/vehiclesearch/search/fr-fr/stocklocator_uc";
 const MAX_RESULT: u32 = 50;
-const CONCURRENT_REQUESTS: usize = 10;
+const CONCURRENT_REQUESTS: usize = 5;
 
 fn build_search_url(
     condition: Condition,
