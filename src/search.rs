@@ -5,15 +5,25 @@ use futures::{StreamExt, stream};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
-use crate::vehicle::Vehicle;
+use crate::{
+    config::{Condition, Configuration},
+    vehicle::Vehicle,
+};
 
 const NEW_CAR_URL: &str = "https://stolo-data-service.prod.stolo.eu-central-1.aws.bmw.cloud/vehiclesearch/search/fr-fr/stocklocator";
 const USED_CAR_URL: &str = "https://stolo-data-service.prod.stolo.eu-central-1.aws.bmw.cloud/vehiclesearch/search/fr-fr/stocklocator_uc";
 const MAX_RESULT: u32 = 50;
 const CONCURRENT_REQUESTS: usize = 10;
 
-fn build_search_url(new_car: bool, max_result: u32, start_index: Option<u32>) -> Result<Url> {
-    let base_url = if new_car { NEW_CAR_URL } else { USED_CAR_URL };
+fn build_search_url(
+    condition: Condition,
+    max_result: u32,
+    start_index: Option<u32>,
+) -> Result<Url> {
+    let base_url = match condition {
+        Condition::New => NEW_CAR_URL,
+        Condition::Used => USED_CAR_URL,
+    };
 
     let params = [
         ("brand", "BMW"),
@@ -106,15 +116,12 @@ struct Hit {
     vehicle: Vehicle,
 }
 
-pub async fn search_cars(
-    new_car: bool,
-    limit: Option<u32>,
-) -> Result<HashMap<uuid::Uuid, Vehicle>> {
+pub async fn search_cars(configuration: &Configuration) -> Result<HashMap<uuid::Uuid, Vehicle>> {
     let request_body: SearchRequest = SearchRequest {
         search_context: vec![SearchContext {
             model: SearchModel {
                 marketing_model_range: MarketingModelRange {
-                    value: vec!["iX2_U10E".to_string()],
+                    value: configuration.models.clone(),
                 },
             },
         }],
@@ -126,9 +133,9 @@ pub async fn search_cars(
         },
     };
 
-    let total_count = get_total_count(new_car, &request_body).await;
+    let total_count = get_total_count(configuration.condition, &request_body).await;
 
-    let max = match limit {
+    let max = match configuration.limit {
         Some(l) if total_count > l => l,
         _ => total_count,
     };
@@ -139,7 +146,7 @@ pub async fn search_cars(
     let chunks: Vec<u32> = (0..max).step_by(step as usize).collect();
 
     let responses = stream::iter(chunks)
-        .map(|start_index| query_search(new_car, step, start_index, &request_body))
+        .map(|start_index| query_search(configuration.condition, step, start_index, &request_body))
         .buffer_unordered(CONCURRENT_REQUESTS);
 
     let mut vehicles = HashMap::new();
@@ -164,13 +171,13 @@ pub async fn search_cars(
 }
 
 async fn query_search(
-    new_car: bool,
+    condition: Condition,
     max_result: u32,
     start_index: u32,
     body: &SearchRequest,
 ) -> Result<SearchResponse> {
     let response: reqwest::Response = reqwest::Client::new()
-        .post(build_search_url(new_car, max_result, Some(start_index))?)
+        .post(build_search_url(condition, max_result, Some(start_index))?)
         .json::<SearchRequest>(body)
         .send()
         .await?;
@@ -185,8 +192,8 @@ async fn query_search(
         .map_err(anyhow::Error::from)
 }
 
-async fn get_total_count(new_car: bool, body: &SearchRequest) -> u32 {
-    let response = query_search(new_car, MAX_RESULT, 0, body).await;
+async fn get_total_count(condition: Condition, body: &SearchRequest) -> u32 {
+    let response = query_search(condition, MAX_RESULT, 0, body).await;
 
     match response {
         Ok(res) => res.metadata.total_count,
@@ -200,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_build_search_url_with_defaults() {
-        let url = build_search_url(true, 42, None).expect("Failed to build default URL");
+        let url = build_search_url(Condition::New, 42, None).expect("Failed to build default URL");
         assert_eq!(
             url.as_str(),
             "https://stolo-data-service.prod.stolo.eu-central-1.aws.bmw.cloud/vehiclesearch/search/fr-fr/stocklocator?brand=BMW&maxResults=42&startIndex=0"
@@ -209,19 +216,22 @@ mod tests {
 
     #[test]
     fn test_build_search_url_for_new_cars() {
-        let url = build_search_url(true, 42, None).expect("Failed to build URL for new cars");
+        let url =
+            build_search_url(Condition::New, 42, None).expect("Failed to build URL for new cars");
         assert!(url.as_str().starts_with(NEW_CAR_URL));
     }
 
     #[test]
     fn test_build_search_url_for_used_cars() {
-        let url = build_search_url(false, 42, None).expect("Failed to build URL for used cars");
+        let url =
+            build_search_url(Condition::Used, 42, None).expect("Failed to build URL for used cars");
         assert!(url.as_str().starts_with(USED_CAR_URL));
     }
 
     #[test]
     fn test_build_search_url_with_max_results() {
-        let url = build_search_url(true, 109, None).expect("Failed to build URL with max_result");
+        let url = build_search_url(Condition::New, 109, None)
+            .expect("Failed to build URL with max_result");
         assert_eq!(
             url.as_str(),
             "https://stolo-data-service.prod.stolo.eu-central-1.aws.bmw.cloud/vehiclesearch/search/fr-fr/stocklocator?brand=BMW&maxResults=50&startIndex=0"
@@ -229,7 +239,7 @@ mod tests {
     }
     #[test]
     fn test_build_search_url_with_start_index() {
-        let url = build_search_url(true, 42, Some(42000))
+        let url = build_search_url(Condition::New, 42, Some(42000))
             .expect("Failed to build URL with start index 42000");
         assert_eq!(
             url.as_str(),
