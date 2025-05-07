@@ -16,9 +16,9 @@ struct Args {
     #[arg(long)]
     used: bool,
 
-    /// Maximum number of results to return
-    #[arg(short, long, default_value_t = 150)]
-    count: u32,
+    /// Maximum number of results to fetch
+    #[arg(short, long)]
+    limit: Option<u32>,
 
     /// Equipment filter on all found cars
     #[arg(long)]
@@ -31,12 +31,16 @@ async fn main() {
 
     let new_car = !args.used;
 
+    if args.limit.is_some() {
+        println!("Limiting results to {}", args.limit.unwrap());
+    }
+
     print!(
         "Searching for {} cars...\n",
         if new_car { "new" } else { "used" }
     );
 
-    let cars = search_cars(new_car, args.count).await.unwrap();
+    let cars = search_cars(new_car, args.limit).await.unwrap();
     print!("Found {} cars:\n", cars.len());
 
     let price_sorted_car = sort_by_price(cars);

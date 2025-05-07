@@ -106,7 +106,10 @@ struct Hit {
     vehicle: Vehicle,
 }
 
-pub async fn search_cars(new_car: bool, count: u32) -> Result<HashMap<uuid::Uuid, Vehicle>> {
+pub async fn search_cars(
+    new_car: bool,
+    limit: Option<u32>,
+) -> Result<HashMap<uuid::Uuid, Vehicle>> {
     let request_body: SearchRequest = SearchRequest {
         search_context: vec![SearchContext {
             model: SearchModel {
@@ -125,10 +128,9 @@ pub async fn search_cars(new_car: bool, count: u32) -> Result<HashMap<uuid::Uuid
 
     let total_count = get_total_count(new_car, &request_body).await;
 
-    let max = if total_count > count as u32 {
-        count as u32
-    } else {
-        total_count
+    let max = match limit {
+        Some(l) if total_count > l => l,
+        _ => total_count,
     };
 
     let step = if max > MAX_RESULT { MAX_RESULT } else { max };
