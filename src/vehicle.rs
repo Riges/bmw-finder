@@ -22,12 +22,19 @@ pub struct Vehicle {
 
     #[serde(rename = "price")]
     price: VehiclePrice,
+
+    #[serde(rename = "ordering")]
+    ordering: Ordering,
 }
 
 impl Vehicle {
     pub fn get_link(&self) -> String {
         format!(
-            "https://www.bmw.fr/fr-fr/sl/stocklocator#/details/{}",
+            "https://www.bmw.fr/fr-fr/sl/{}#/details/{}",
+            match self.ordering.order_data.usage_state.as_str() {
+                "NEW" => "stocklocator",
+                _ => "stocklocator_uc",
+            },
             self.vss_id
         )
     }
@@ -112,13 +119,25 @@ struct VehiclePrice {
     vehicle_gross_price: f32,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct Ordering {
+    #[serde(rename = "orderData")]
+    order_data: OrderData,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct OrderData {
+    #[serde(rename = "usageState")]
+    usage_state: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use uuid::{Uuid, uuid};
 
     #[test]
-    fn get_link() {
+    fn get_new_link_when_usage_state_is_new() {
         let vehicle = Vehicle {
             document_id: "12345".to_string(),
             vss_id: uuid!("67e55044-10b1-426f-9247-bb680e5fe0c8"),
@@ -132,12 +151,75 @@ mod tests {
                     equipments: HashMap::new(),
                 },
             },
+            ordering: Ordering {
+                order_data: OrderData {
+                    usage_state: "NEW".to_string(),
+                },
+            },
         };
         let link = vehicle.get_link();
 
         assert_eq!(
             link,
             "https://www.bmw.fr/fr-fr/sl/stocklocator#/details/67e55044-10b1-426f-9247-bb680e5fe0c8"
+        )
+    }
+
+    #[test]
+    fn get_used_link_when_usage_state_is_used() {
+        let vehicle = Vehicle {
+            document_id: "12345".to_string(),
+            vss_id: uuid!("67e55044-10b1-426f-9247-bb680e5fe0c8"),
+            ordering_uuid: Some(Uuid::new_v4()),
+            offering: Offering { offer_prices: None },
+            price: VehiclePrice {
+                vehicle_gross_price: 0.0,
+            },
+            vehicle_specification: VehicleSpecification {
+                model_and_option: ModelAndOption {
+                    equipments: HashMap::new(),
+                },
+            },
+            ordering: Ordering {
+                order_data: OrderData {
+                    usage_state: "USED".to_string(),
+                },
+            },
+        };
+        let link = vehicle.get_link();
+
+        assert_eq!(
+            link,
+            "https://www.bmw.fr/fr-fr/sl/stocklocator_uc#/details/67e55044-10b1-426f-9247-bb680e5fe0c8"
+        )
+    }
+
+    #[test]
+    fn get_used_link_when_state_is_not_new() {
+        let vehicle = Vehicle {
+            document_id: "12345".to_string(),
+            vss_id: uuid!("67e55044-10b1-426f-9247-bb680e5fe0c8"),
+            ordering_uuid: Some(Uuid::new_v4()),
+            offering: Offering { offer_prices: None },
+            price: VehiclePrice {
+                vehicle_gross_price: 0.0,
+            },
+            vehicle_specification: VehicleSpecification {
+                model_and_option: ModelAndOption {
+                    equipments: HashMap::new(),
+                },
+            },
+            ordering: Ordering {
+                order_data: OrderData {
+                    usage_state: "DEALER_YOUNG_USED".to_string(),
+                },
+            },
+        };
+        let link = vehicle.get_link();
+
+        assert_eq!(
+            link,
+            "https://www.bmw.fr/fr-fr/sl/stocklocator_uc#/details/67e55044-10b1-426f-9247-bb680e5fe0c8"
         )
     }
 
@@ -167,6 +249,11 @@ mod tests {
                         equipments: HashMap::new(),
                     },
                 },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
             };
 
             assert_eq!(vehicle.get_price(), Some(100.0));
@@ -185,6 +272,11 @@ mod tests {
                 vehicle_specification: VehicleSpecification {
                     model_and_option: ModelAndOption {
                         equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
                     },
                 },
             };
@@ -219,6 +311,11 @@ mod tests {
                         equipments: HashMap::new(),
                     },
                 },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
             };
 
             assert_eq!(vehicle.get_discount_percentage(), Some(25.0));
@@ -237,6 +334,11 @@ mod tests {
                 vehicle_specification: VehicleSpecification {
                     model_and_option: ModelAndOption {
                         equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
                     },
                 },
             };
@@ -272,6 +374,11 @@ mod tests {
                         )]),
                     },
                 },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
             };
 
             let result = vehicle.has_equipment_name_like("Test");
@@ -292,6 +399,11 @@ mod tests {
                 vehicle_specification: VehicleSpecification {
                     model_and_option: ModelAndOption {
                         equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
                     },
                 },
             };
