@@ -6,6 +6,7 @@ pub enum Condition {
     Used,
 }
 
+#[derive(Clone)]
 pub struct Configuration {
     pub models: Vec<String>,
     pub condition: Condition,

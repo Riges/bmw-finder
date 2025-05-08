@@ -1,8 +1,8 @@
 use std::{collections::HashMap, u8};
 
 use anyhow::Result;
-use futures::{StreamExt, stream};
-use reqwest::Url;
+use futures::{StreamExt, TryStreamExt, stream};
+use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -46,7 +46,7 @@ fn build_search_url(
     Url::parse_with_params(base_url, &params).map_err(anyhow::Error::from)
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct SearchRequest {
     #[serde(rename = "searchContext")]
     search_context: Vec<SearchContext>,
@@ -55,7 +55,7 @@ struct SearchRequest {
     results_context: Option<ResultsContext>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct SearchContext {
     #[serde(rename = "model", skip_serializing_if = "Option::is_none")]
     model: Option<SearchModel>,
@@ -64,35 +64,35 @@ struct SearchContext {
     vss_ids: Option<FilterWithValues>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct SearchModel {
     #[serde(rename = "marketingModelRange")]
     marketing_model_range: FilterWithValues,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct FilterWithValues {
     #[serde(rename = "value")]
     value: Vec<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct ResultsContext {
     sort: Vec<Sort>,
 }
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Copy)]
 struct Sort {
     by: SortBy,
     order: SortOrder,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Copy)]
 enum SortBy {
     #[serde(rename = "PRICE")]
     Price,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Copy)]
 #[allow(dead_code)]
 enum SortOrder {
     #[serde(rename = "ASC")]
@@ -122,6 +122,7 @@ struct Hit {
 }
 
 pub async fn search_cars(configuration: &Configuration) -> Result<HashMap<uuid::Uuid, Vehicle>> {
+    let client = Client::new();
     let request_body: SearchRequest = SearchRequest {
         search_context: vec![SearchContext {
             model: Some(SearchModel {
@@ -139,39 +140,31 @@ pub async fn search_cars(configuration: &Configuration) -> Result<HashMap<uuid::
         }),
     };
 
-    let total_count = get_total_count(configuration.condition, &request_body).await;
+    let total_count = get_total_count(&client, configuration.condition, request_body.clone()).await;
+    let calls = determine_calls_needed(configuration, request_body.clone(), total_count);
 
-    let max = match configuration.limit {
-        Some(l) if total_count > l => l,
-        _ => total_count,
-    };
-
-    let step = if max > MAX_RESULT { MAX_RESULT } else { max };
-
-    // split into chunks of MAX_RESULT
-    let chunks: Vec<u32> = (0..max).step_by(step as usize).collect();
-
-    let responses = stream::iter(chunks)
-        .map(|start_index| query_search(configuration.condition, step, start_index, &request_body))
-        .buffer_unordered(CONCURRENT_REQUESTS);
-
-    let mut vehicles = HashMap::new();
-
-    responses
-        .for_each(|response| {
-            match response {
-                Ok(res) => {
-                    res.hits.into_iter().for_each(|hit| {
-                        vehicles.insert(hit.vehicle.vss_id, hit.vehicle);
-                    });
-                }
-                Err(e) => {
-                    eprintln!("Error: {}", e);
-                }
-            }
-            futures::future::ready(())
+    let vehicles = stream::iter(&calls)
+        .map(|call| {
+            query_search(
+                &client,
+                call.condition,
+                call.max_result,
+                call.start_index,
+                call.body.clone(),
+            )
         })
-        .await;
+        .buffer_unordered(CONCURRENT_REQUESTS)
+        .try_fold(
+            HashMap::with_capacity(calls.len() * (MAX_RESULT as usize)),
+            |mut acc, resp| async move {
+                for hit in resp.hits {
+                    acc.insert(hit.vehicle.vss_id, hit.vehicle);
+                }
+                Ok(acc)
+            },
+        )
+        .await
+        .map_err(|_| anyhow::anyhow!("Error in one of the requests"))?;
 
     Ok(vehicles)
 }
@@ -180,6 +173,7 @@ pub async fn search_cars_by_vss_id(
     configuration: &Configuration,
     vss_id: &str,
 ) -> Result<Option<Vehicle>> {
+    let client = Client::new();
     let request_body: SearchRequest = SearchRequest {
         search_context: vec![SearchContext {
             model: None,
@@ -190,7 +184,7 @@ pub async fn search_cars_by_vss_id(
         results_context: None,
     };
 
-    let response = query_search(configuration.condition, 1, 0, &request_body).await;
+    let response = query_search(&client, configuration.condition, 1, 0, request_body).await;
 
     match response {
         Ok(res) if res.hits.is_empty() => Ok(None),
@@ -203,14 +197,15 @@ pub async fn search_cars_by_vss_id(
 }
 
 async fn query_search(
+    client: &Client,
     condition: Condition,
     max_result: u32,
     start_index: u32,
-    body: &SearchRequest,
+    body: SearchRequest,
 ) -> Result<SearchResponse> {
-    let response: reqwest::Response = reqwest::Client::new()
+    let response: reqwest::Response = client
         .post(build_search_url(condition, max_result, Some(start_index))?)
-        .json::<SearchRequest>(body)
+        .json(&body)
         .send()
         .await?;
 
@@ -224,13 +219,44 @@ async fn query_search(
         .map_err(anyhow::Error::from)
 }
 
-async fn get_total_count(condition: Condition, body: &SearchRequest) -> u32 {
-    let response = query_search(condition, MAX_RESULT, 0, body).await;
+async fn get_total_count(client: &Client, condition: Condition, body: SearchRequest) -> u32 {
+    let response = query_search(client, condition, MAX_RESULT, 0, body).await;
 
     match response {
         Ok(res) => res.metadata.total_count,
         _ => 0,
     }
+}
+
+struct CallDefinition {
+    condition: Condition,
+    start_index: u32,
+    max_result: u32,
+    body: SearchRequest,
+}
+
+fn determine_calls_needed(
+    configuration: &Configuration,
+    body: SearchRequest,
+    total_count: u32,
+) -> Vec<CallDefinition> {
+    let max = match configuration.limit {
+        Some(l) if total_count > l => l,
+        _ => total_count,
+    };
+
+    let step = if max > MAX_RESULT { MAX_RESULT } else { max };
+
+    // split into chunks of MAX_RESULT
+    (0..max)
+        .step_by(step as usize)
+        .map(|start_index| CallDefinition {
+            condition: configuration.condition,
+            start_index,
+            max_result: step,
+            body: body.clone(),
+        })
+        .collect()
 }
 
 #[cfg(test)]

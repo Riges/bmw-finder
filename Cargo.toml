@@ -8,6 +8,7 @@ description = "A CLI tool to search for BMW cars in stock with advanced filterin
 anyhow = "1.0.98"
 clap = { version = "4.5.36", features = ["derive"] }
 futures = "0.3.31"
+itertools = "0.14.0"
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.140"
