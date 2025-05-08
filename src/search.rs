@@ -51,23 +51,28 @@ struct SearchRequest {
     #[serde(rename = "searchContext")]
     search_context: Vec<SearchContext>,
 
-    #[serde(rename = "resultsContext")]
-    results_context: ResultsContext,
+    #[serde(rename = "resultsContext", skip_serializing_if = "Option::is_none")]
+    results_context: Option<ResultsContext>,
 }
 
 #[derive(Serialize)]
 struct SearchContext {
-    model: SearchModel,
+    #[serde(rename = "model", skip_serializing_if = "Option::is_none")]
+    model: Option<SearchModel>,
+
+    #[serde(rename = "vssIds", skip_serializing_if = "Option::is_none")]
+    vss_ids: Option<FilterWithValues>,
 }
 
 #[derive(Serialize)]
 struct SearchModel {
     #[serde(rename = "marketingModelRange")]
-    marketing_model_range: MarketingModelRange,
+    marketing_model_range: FilterWithValues,
 }
 
 #[derive(Serialize)]
-struct MarketingModelRange {
+struct FilterWithValues {
+    #[serde(rename = "value")]
     value: Vec<String>,
 }
 
@@ -119,18 +124,19 @@ struct Hit {
 pub async fn search_cars(configuration: &Configuration) -> Result<HashMap<uuid::Uuid, Vehicle>> {
     let request_body: SearchRequest = SearchRequest {
         search_context: vec![SearchContext {
-            model: SearchModel {
-                marketing_model_range: MarketingModelRange {
+            model: Some(SearchModel {
+                marketing_model_range: FilterWithValues {
                     value: configuration.models.clone(),
                 },
-            },
+            }),
+            vss_ids: None,
         }],
-        results_context: ResultsContext {
+        results_context: Some(ResultsContext {
             sort: vec![Sort {
                 by: SortBy::Price,
                 order: SortOrder::Asc,
             }],
-        },
+        }),
     };
 
     let total_count = get_total_count(configuration.condition, &request_body).await;
@@ -168,6 +174,32 @@ pub async fn search_cars(configuration: &Configuration) -> Result<HashMap<uuid::
         .await;
 
     Ok(vehicles)
+}
+
+pub async fn search_cars_by_vss_id(
+    configuration: &Configuration,
+    vss_id: &str,
+) -> Result<Option<Vehicle>> {
+    let request_body: SearchRequest = SearchRequest {
+        search_context: vec![SearchContext {
+            model: None,
+            vss_ids: Some(FilterWithValues {
+                value: vec![vss_id.to_string()],
+            }),
+        }],
+        results_context: None,
+    };
+
+    let response = query_search(configuration.condition, 1, 0, &request_body).await;
+
+    match response {
+        Ok(res) if res.hits.is_empty() => Ok(None),
+        Ok(res) if res.hits.first().is_some() => Ok(Some(res.hits[0].vehicle.clone())),
+        Err(e) => {
+            return Err(e);
+        }
+        _ => Err(anyhow::anyhow!("Unexpected response format")),
+    }
 }
 
 async fn query_search(
@@ -252,18 +284,19 @@ mod tests {
         let expected_json = r#"{"searchContext":[{"model":{"marketingModelRange":{"value":["iX2_U10E"]}}}],"resultsContext":{"sort":[{"by":"PRICE","order":"ASC"}]}}"#;
         let request: SearchRequest = SearchRequest {
             search_context: vec![SearchContext {
-                model: SearchModel {
-                    marketing_model_range: MarketingModelRange {
+                model: Some(SearchModel {
+                    marketing_model_range: FilterWithValues {
                         value: vec!["iX2_U10E".to_string()],
                     },
-                },
+                }),
+                vss_ids: None,
             }],
-            results_context: ResultsContext {
+            results_context: Some(ResultsContext {
                 sort: vec![Sort {
                     by: SortBy::Price,
                     order: SortOrder::Asc,
                 }],
-            },
+            }),
         };
 
         let request_json = serde_json::to_string(&request).expect("Failed to serialize request");
@@ -276,18 +309,19 @@ mod tests {
         let expected_json = r#"{"searchContext":[{"model":{"marketingModelRange":{"value":["iX2_U10E"]}}}],"resultsContext":{"sort":[{"by":"PRICE","order":"DESC"}]}}"#;
         let request: SearchRequest = SearchRequest {
             search_context: vec![SearchContext {
-                model: SearchModel {
-                    marketing_model_range: MarketingModelRange {
+                model: Some(SearchModel {
+                    marketing_model_range: FilterWithValues {
                         value: vec!["iX2_U10E".to_string()],
                     },
-                },
+                }),
+                vss_ids: None,
             }],
-            results_context: ResultsContext {
+            results_context: Some(ResultsContext {
                 sort: vec![Sort {
                     by: SortBy::Price,
                     order: SortOrder::Desc,
                 }],
-            },
+            }),
         };
 
         let request_json = serde_json::to_string(&request).expect("Failed to serialize request");

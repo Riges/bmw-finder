@@ -1,6 +1,6 @@
 use config::Condition;
 
-use search::search_cars;
+use search::{search_cars, search_cars_by_vss_id};
 use vehicle::Vehicle;
 
 mod config;
@@ -54,6 +54,14 @@ async fn main() {
         // if !car.has_equipment_name_like("Pack Innovation") {
         //     continue;
         // }
+
+        let car = match car.get_price() {
+            Some(_) => car.clone(),
+            None => search_cars_by_vss_id(&configuration, &car.vss_id.to_string().as_str())
+                .await
+                .unwrap_or_else(|_| Some(car.clone()))
+                .unwrap(),
+        };
 
         println!(
             "{0: <36} | {1: <12} | {2: <8} | {3}",
