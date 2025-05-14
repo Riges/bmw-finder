@@ -42,16 +42,10 @@ impl Vehicle {
     pub fn get_price(&self) -> Option<f32> {
         {
             match self.offering.offer_prices {
-                Some(ref offer_prices) => {
-                    match offer_prices
-                        .values()
-                        .next()
-                        .map(|price| price.offer_gross_price)
-                    {
-                        Some(x) => Some(x),
-                        None => None,
-                    }
-                }
+                Some(ref offer_prices) => offer_prices
+                    .values()
+                    .next()
+                    .and_then(|offer_price| offer_price.offer_gross_price),
                 None => None,
             }
         }
@@ -92,7 +86,7 @@ struct Offering {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct OfferPrice {
     #[serde(rename = "offerGrossPrice")]
-    offer_gross_price: f32,
+    offer_gross_price: Option<f32>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -237,7 +231,7 @@ mod tests {
                     offer_prices: Some(HashMap::from([(
                         "FR".to_string(),
                         OfferPrice {
-                            offer_gross_price: 100.0,
+                            offer_gross_price: Some(100.0),
                         },
                     )])),
                 },
@@ -283,6 +277,65 @@ mod tests {
 
             assert_eq!(vehicle.get_price(), None);
         }
+
+        #[test]
+        fn should_return_none_when_offer_gross_price_doesnt_exist() {
+            let vehicle = Vehicle {
+                document_id: "12345".to_string(),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering {
+                    offer_prices: Some(HashMap::from([(
+                        "FR".to_string(),
+                        OfferPrice {
+                            offer_gross_price: None,
+                        },
+                    )])),
+                },
+                price: VehiclePrice {
+                    vehicle_gross_price: 0.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
+            };
+
+            assert_eq!(vehicle.get_price(), None);
+        }
+
+        #[test]
+        fn should_return_none_when_offers_is_empty() {
+            let vehicle = Vehicle {
+                document_id: "12345".to_string(),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering {
+                    offer_prices: Some(HashMap::new()),
+                },
+                price: VehiclePrice {
+                    vehicle_gross_price: 0.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
+            };
+
+            assert_eq!(vehicle.get_price(), None);
+        }
     }
 
     mod get_discount_percentage {
@@ -299,7 +352,7 @@ mod tests {
                     offer_prices: Some(HashMap::from([(
                         "FR".to_string(),
                         OfferPrice {
-                            offer_gross_price: 75.0,
+                            offer_gross_price: Some(75.0),
                         },
                     )])),
                 },

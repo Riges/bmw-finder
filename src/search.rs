@@ -220,11 +220,14 @@ async fn query_search(
 }
 
 async fn get_total_count(client: &Client, condition: Condition, body: SearchRequest) -> u32 {
-    let response = query_search(client, condition, MAX_RESULT, 0, body).await;
+    let response = query_search(client, condition, 1, 0, body).await;
 
     match response {
         Ok(res) => res.metadata.total_count,
-        _ => 0,
+        Err(e) => {
+            eprintln!("Error fetching total count: {:?}", e);
+            return 0;
+        }
     }
 }
 
@@ -244,6 +247,10 @@ fn determine_calls_needed(
         Some(l) if total_count > l => l,
         _ => total_count,
     };
+
+    if max < 1 {
+        return vec![];
+    }
 
     let step = if max > MAX_RESULT { MAX_RESULT } else { max };
 
