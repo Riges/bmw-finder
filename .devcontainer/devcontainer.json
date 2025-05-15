@@ -20,18 +20,19 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "cargo build",
+	"postCreateCommand": "cargo +stable install cargo-llvm-cov --locked && rustup component add llvm-tools-preview && cargo build",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"rust-lang.rust-analyzer"
+				"rust-lang.rust-analyzer",
+				"ryanluker.vscode-coverage-gutters"
 			]
 		}
 	},
 	"tasks": {
 		"build": "cargo build",
-		"test": "cargo test",
+		"test": "cargo llvm-cov",
 		"run": "cargo run"
 	}
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.

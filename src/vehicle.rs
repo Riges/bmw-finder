@@ -463,5 +463,30 @@ mod tests {
 
             assert_eq!(vehicle.has_equipment_name_like("Test"), false);
         }
+
+        #[test]
+        fn should_return_false_if_name_is_empty() {
+            let vehicle = Vehicle {
+                document_id: "12345".to_string(),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering { offer_prices: None },
+                price: VehiclePrice {
+                    vehicle_gross_price: 0.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
+            };
+
+            assert_eq!(vehicle.has_equipment_name_like(""), false);
+        }
     }
 }
