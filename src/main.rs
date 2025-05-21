@@ -34,7 +34,7 @@ async fn main() {
             if configuration
                 .filter_equipment
                 .clone()
-                .is_some_and(|equipment_names| !has_expected_equipments(car, equipment_names))
+                .is_some_and(|equipment_names| !car.has_equipment_names(equipment_names))
             {
                 return false;
             }
@@ -84,14 +84,4 @@ fn sort_by_price(a: &Vehicle, b: &Vehicle) -> std::cmp::Ordering {
         (Some(_), None) => std::cmp::Ordering::Less,
         (None, None) => std::cmp::Ordering::Equal,
     }
-}
-
-fn has_expected_equipments(car: &Vehicle, equipment_names: Vec<String>) -> bool {
-    if equipment_names.is_empty() {
-        return true;
-    }
-
-    equipment_names
-        .iter()
-        .all(|equipment_name| car.has_equipment_name_like(equipment_name))
 }

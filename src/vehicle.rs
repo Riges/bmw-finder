@@ -75,6 +75,16 @@ impl Vehicle {
                     .any(|(_, value)| value.to_lowercase().contains(name))
             })
     }
+
+    pub fn has_equipment_names(&self, equipment_names: Vec<String>) -> bool {
+        if equipment_names.is_empty() {
+            return true;
+        }
+
+        equipment_names
+            .iter()
+            .all(|equipment_name| self.has_equipment_name_like(equipment_name))
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -487,6 +497,214 @@ mod tests {
             };
 
             assert_eq!(vehicle.has_equipment_name_like(""), false);
+        }
+    }
+
+    mod has_equipment_names {
+        use super::*;
+        use uuid::Uuid;
+
+        #[test]
+        fn should_return_true_when_equipment_names_exist() {
+            let vehicle = Vehicle {
+                document_id: "12345".to_string(),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering { offer_prices: None },
+                price: VehiclePrice {
+                    vehicle_gross_price: 0.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::from([
+                            (
+                                "TEST42".to_string(),
+                                Equipment {
+                                    name: HashMap::from([
+                                        ("default_FR".to_string(), "Test asdasdasd".to_string()),
+                                        ("fr_FR".to_string(), "Another name".to_string()),
+                                    ]),
+                                },
+                            ),
+                            (
+                                "TEST43".to_string(),
+                                Equipment {
+                                    name: HashMap::from([
+                                        ("default_FR".to_string(), "My equipment".to_string()),
+                                        ("fr_FR".to_string(), "Another name2".to_string()),
+                                    ]),
+                                },
+                            ),
+                            (
+                                "TEST44".to_string(),
+                                Equipment {
+                                    name: HashMap::from([
+                                        (
+                                            "default_FR".to_string(),
+                                            "My second equipment".to_string(),
+                                        ),
+                                        ("fr_FR".to_string(), "Another name3".to_string()),
+                                    ]),
+                                },
+                            ),
+                        ]),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
+            };
+
+            let result =
+                vehicle.has_equipment_names(vec!["Test".to_string(), "My equipment".to_string()]);
+
+            assert_eq!(result, true);
+        }
+
+        #[test]
+        fn should_return_false_if_equipment_list_is_empty() {
+            let vehicle = Vehicle {
+                document_id: "12345".to_string(),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering { offer_prices: None },
+                price: VehiclePrice {
+                    vehicle_gross_price: 0.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
+            };
+
+            let result = vehicle.has_equipment_names(vec!["Test".to_string()]);
+
+            assert_eq!(result, false);
+        }
+
+        #[test]
+        fn should_return_false_if_equipment_names_is_empty() {
+            let vehicle = Vehicle {
+                document_id: "12345".to_string(),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering { offer_prices: None },
+                price: VehiclePrice {
+                    vehicle_gross_price: 0.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::from([
+                            (
+                                "TEST42".to_string(),
+                                Equipment {
+                                    name: HashMap::from([
+                                        ("default_FR".to_string(), "Test asdasdasd".to_string()),
+                                        ("fr_FR".to_string(), "Another name".to_string()),
+                                    ]),
+                                },
+                            ),
+                            (
+                                "TEST43".to_string(),
+                                Equipment {
+                                    name: HashMap::from([
+                                        ("default_FR".to_string(), "My equipment".to_string()),
+                                        ("fr_FR".to_string(), "Another name2".to_string()),
+                                    ]),
+                                },
+                            ),
+                            (
+                                "TEST44".to_string(),
+                                Equipment {
+                                    name: HashMap::from([
+                                        (
+                                            "default_FR".to_string(),
+                                            "My second equipment".to_string(),
+                                        ),
+                                        ("fr_FR".to_string(), "Another name3".to_string()),
+                                    ]),
+                                },
+                            ),
+                        ]),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
+            };
+
+            let result = vehicle.has_equipment_names(vec![]);
+
+            assert_eq!(result, true);
+        }
+
+        #[test]
+        fn should_return_false_if_one_or_many_equipment_names_not_be_found() {
+            let vehicle = Vehicle {
+                document_id: "12345".to_string(),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering { offer_prices: None },
+                price: VehiclePrice {
+                    vehicle_gross_price: 0.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::from([
+                            (
+                                "TEST42".to_string(),
+                                Equipment {
+                                    name: HashMap::from([
+                                        ("default_FR".to_string(), "Test asdasdasd".to_string()),
+                                        ("fr_FR".to_string(), "Another name".to_string()),
+                                    ]),
+                                },
+                            ),
+                            (
+                                "TEST43".to_string(),
+                                Equipment {
+                                    name: HashMap::from([
+                                        ("default_FR".to_string(), "My equipment".to_string()),
+                                        ("fr_FR".to_string(), "Another name2".to_string()),
+                                    ]),
+                                },
+                            ),
+                            (
+                                "TEST44".to_string(),
+                                Equipment {
+                                    name: HashMap::from([
+                                        (
+                                            "default_FR".to_string(),
+                                            "My second equipment".to_string(),
+                                        ),
+                                        ("fr_FR".to_string(), "Another name3".to_string()),
+                                    ]),
+                                },
+                            ),
+                        ]),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: "NEW".to_string(),
+                    },
+                },
+            };
+
+            let result =
+                vehicle.has_equipment_names(vec!["Test".to_string(), "Not found".to_string()]);
+
+            assert_eq!(result, false);
         }
     }
 }
