@@ -122,7 +122,7 @@ struct Hit {
     vehicle: Vehicle,
 }
 
-pub async fn search_cars(configuration: &Configuration) -> Result<HashMap<uuid::Uuid, Vehicle>> {
+pub async fn search(configuration: &Configuration) -> Result<HashMap<uuid::Uuid, Vehicle>> {
     let client = Client::new();
     let request_body: SearchRequest = SearchRequest {
         search_context: vec![SearchContext {
@@ -170,7 +170,7 @@ pub async fn search_cars(configuration: &Configuration) -> Result<HashMap<uuid::
     Ok(vehicles)
 }
 
-pub async fn search_cars_by_vss_id(
+pub async fn search_by_vss_id(
     configuration: &Configuration,
     vss_id: &Uuid,
 ) -> Result<Option<Vehicle>> {

@@ -7,7 +7,7 @@ Find new and used BMWs, display their details, and sort them by price.
 
 ## Features
 
-- 🔎 **Search** for new or used cars
+- 🔎 **Search** for new or used vehicles
 - 💰 **Sort** results by price
 - 📜 **List** formatted car details
 
@@ -22,10 +22,10 @@ cargo run
 ## Run Examples
 
 ```bash
-# Default: new cars, model iX2_U10E
+# Default: new vehicles, model iX2_U10E
 cargo run
 
-# Search for used cars
+# Search for used vehicles
 cargo run -- --used
 
 # Specify one or more models
@@ -49,7 +49,7 @@ cargo run -- --model iX1_U11E --used -l 3 \
 | Flag                             | Description                       | Default    |
 | -------------------------------- | --------------------------------- | ---------- |
 | `--model <MODEL>`                | Models to search for (repeatable) | `iX2_U10E` |
-| `--used`                         | Search for used cars              | `false`    |
+| `--used`                         | Search for used vehicles          | `false`    |
 | `-l`, `--limit <NUMBER>`         | Maximum number of results         | none       |
 | `--filter-equipment <EQUIPMENT>` | Filter by equipment (repeatable)  | none       |
 

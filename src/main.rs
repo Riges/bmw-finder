@@ -1,6 +1,6 @@
 use config::Condition;
 
-use search::{search_cars, search_cars_by_vss_id};
+use search::{search, search_by_vss_id};
 use vehicle::Vehicle;
 
 mod config;
@@ -16,7 +16,7 @@ async fn main() {
     }
 
     println!(
-        "Searching for {} cars ({}) ...\n",
+        "Searching for {} vehicles ({}) ...\n",
         match configuration.condition {
             Condition::New => "new",
             Condition::Used => "used",
@@ -24,62 +24,66 @@ async fn main() {
         configuration.models.join(", ")
     );
 
-    let found_cars = search_cars(&configuration).await.unwrap();
-    print!("Found {} cars:\n", found_cars.len());
+    // launch search
+    let found_vehicles = search(&configuration).await.unwrap();
+    println!("Found {} vehicles:", found_vehicles.len());
 
     // filter cars by expected equipment
-    let mut filtered_cars = found_cars
+    let mut filtered_vehicles = found_vehicles
         .iter()
-        .filter(|(_, car)| {
+        .filter(|(_, vehicle)| {
             if configuration
                 .filter_equipment
                 .clone()
-                .is_some_and(|equipment_names| !car.has_equipment_names(equipment_names))
+                .is_some_and(|equipment_names| !vehicle.has_equipment_names(equipment_names))
             {
                 return false;
             }
             true
         })
-        .map(|(_, car)| car.clone())
+        .map(|(_, vehicle)| vehicle.clone())
         .collect::<Vec<Vehicle>>();
 
-    filtered_cars.sort_by(sort_by_price);
+    filtered_vehicles.sort_by(sort_by_price);
 
     println!(
         "{0: <36} | {1: <12} | {2: <8} | {3}",
         "Id", "Price", "Discount", "Link"
     );
 
-    for car in filtered_cars {
-        // if !car.has_equipment_name_like("Pack Innovation") {
+    for vehicle in filtered_vehicles {
+        // if !vehicle.has_equipment_name_like("Pack Innovation") {
         //     continue;
         // }
 
-        let car = match car.get_price() {
-            Some(_) => car.clone(),
-            None => search_cars_by_vss_id(&configuration, &car.vss_id)
+        let vehicle = match vehicle.get_price() {
+            Some(_) => vehicle.clone(),
+            None => search_by_vss_id(&configuration, &vehicle.vss_id)
                 .await
-                .unwrap_or_else(|_| Some(car.clone()))
+                .unwrap_or_else(|_| Some(vehicle.clone()))
                 .unwrap(),
         };
 
         println!(
             "{0: <36} | {1: <12} | {2: <8} | {3}",
-            car.vss_id,
-            format!("{:.2} €", car.get_price().unwrap_or_default()),
-            format!("{:.2} %", car.get_discount_percentage().unwrap_or_default()),
-            car.get_link()
+            vehicle.vss_id,
+            format!("{:.2} €", vehicle.get_price().unwrap_or_default()),
+            format!(
+                "{:.2} %",
+                vehicle.get_discount_percentage().unwrap_or_default()
+            ),
+            vehicle.get_link()
         );
     }
 }
 
 // Order by price, none as last
-fn sort_by_price(a: &Vehicle, b: &Vehicle) -> std::cmp::Ordering {
-    let a_price = a.get_price();
-    let b_price = b.get_price();
+fn sort_by_price(vehicle_a: &Vehicle, vehicle_b: &Vehicle) -> std::cmp::Ordering {
+    let price_a = vehicle_a.get_price();
+    let price_b = vehicle_b.get_price();
 
-    match (a_price, b_price) {
-        (Some(a), Some(b)) => a.partial_cmp(&b).unwrap(),
+    match (price_a, price_b) {
+        (Some(p1), Some(p2)) => p1.partial_cmp(&p2).unwrap(),
         (None, Some(_)) => std::cmp::Ordering::Greater,
         (Some(_), None) => std::cmp::Ordering::Less,
         (None, None) => std::cmp::Ordering::Equal,
