@@ -4,6 +4,7 @@ use anyhow::Result;
 use futures::{StreamExt, TryStreamExt, stream};
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{
     config::{Condition, Configuration},
@@ -171,7 +172,7 @@ pub async fn search_cars(configuration: &Configuration) -> Result<HashMap<uuid::
 
 pub async fn search_cars_by_vss_id(
     configuration: &Configuration,
-    vss_id: &str,
+    vss_id: &Uuid,
 ) -> Result<Option<Vehicle>> {
     let client = Client::new();
     let request_body: SearchRequest = SearchRequest {
@@ -319,7 +320,7 @@ mod tests {
             search_context: vec![SearchContext {
                 model: Some(SearchModel {
                     marketing_model_range: FilterWithValues {
-                        value: vec!["iX2_U10E".to_string()],
+                        value: vec![String::from("iX2_U10E")],
                     },
                 }),
                 vss_ids: None,
@@ -344,7 +345,7 @@ mod tests {
             search_context: vec![SearchContext {
                 model: Some(SearchModel {
                     marketing_model_range: FilterWithValues {
-                        value: vec!["iX2_U10E".to_string()],
+                        value: vec![String::from("iX2_U10E")],
                     },
                 }),
                 vss_ids: None,

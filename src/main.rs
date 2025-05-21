@@ -57,7 +57,7 @@ async fn main() {
 
         let car = match car.get_price() {
             Some(_) => car.clone(),
-            None => search_cars_by_vss_id(&configuration, &car.vss_id.to_string().as_str())
+            None => search_cars_by_vss_id(&configuration, &car.vss_id)
                 .await
                 .unwrap_or_else(|_| Some(car.clone()))
                 .unwrap(),

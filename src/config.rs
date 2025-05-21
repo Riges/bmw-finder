@@ -63,20 +63,20 @@ mod tests {
         #[test]
         fn should_use_args_to_create_configuration() {
             let args = Args {
-                model: vec!["My Model".to_string()],
+                model: vec![String::from("My Model")],
                 used: true,
                 limit: Some(5),
-                filter_equipment: Some(vec!["Pack Innovation".to_string()]),
+                filter_equipment: Some(vec![String::from("Pack Innovation")]),
             };
 
             let config = Configuration::new(args);
 
-            assert_eq!(config.models, vec!["My Model"]);
+            assert_eq!(config.models, vec![String::from("My Model")]);
             assert_eq!(config.condition, Condition::Used);
             assert_eq!(config.limit, Some(5));
             assert_eq!(
                 config.filter_equipment,
-                Some(vec!["Pack Innovation".to_string()])
+                Some(vec![String::from("Pack Innovation")])
             );
         }
     }
@@ -101,14 +101,17 @@ mod tests {
                 "My second Model",
             ]);
 
-            assert_eq!(args.model, vec!["My Model", "My second Model"]);
+            assert_eq!(
+                args.model,
+                vec![String::from("My Model"), String::from("My second Model")]
+            );
             assert_eq!(args.used, true);
             assert_eq!(args.limit, Some(5));
             assert_eq!(
                 args.filter_equipment,
                 Some(vec![
-                    "Pack Innovation".to_string(),
-                    "Pack M Sport".to_string()
+                    String::from("Pack Innovation"),
+                    String::from("Pack M Sport")
                 ])
             );
         }
@@ -117,7 +120,7 @@ mod tests {
         fn should_use_default_values() {
             let args = Args::parse_from(vec!["test"]);
 
-            assert_eq!(args.model, vec!["iX2_U10E"]);
+            assert_eq!(args.model, vec![String::from("iX2_U10E")]);
             assert_eq!(args.used, false);
             assert_eq!(args.limit, None);
             assert_eq!(args.filter_equipment, None);

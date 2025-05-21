@@ -143,7 +143,7 @@ mod tests {
     #[test]
     fn get_new_link_when_usage_state_is_new() {
         let vehicle = Vehicle {
-            document_id: "12345".to_string(),
+            document_id: String::from("12345"),
             vss_id: uuid!("67e55044-10b1-426f-9247-bb680e5fe0c8"),
             ordering_uuid: Some(Uuid::new_v4()),
             offering: Offering { offer_prices: None },
@@ -157,7 +157,7 @@ mod tests {
             },
             ordering: Ordering {
                 order_data: OrderData {
-                    usage_state: "NEW".to_string(),
+                    usage_state: String::from("NEW"),
                 },
             },
         };
@@ -172,7 +172,7 @@ mod tests {
     #[test]
     fn get_used_link_when_usage_state_is_used() {
         let vehicle = Vehicle {
-            document_id: "12345".to_string(),
+            document_id: String::from("12345"),
             vss_id: uuid!("67e55044-10b1-426f-9247-bb680e5fe0c8"),
             ordering_uuid: Some(Uuid::new_v4()),
             offering: Offering { offer_prices: None },
@@ -186,7 +186,7 @@ mod tests {
             },
             ordering: Ordering {
                 order_data: OrderData {
-                    usage_state: "USED".to_string(),
+                    usage_state: String::from("USED"),
                 },
             },
         };
@@ -201,7 +201,7 @@ mod tests {
     #[test]
     fn get_used_link_when_state_is_not_new() {
         let vehicle = Vehicle {
-            document_id: "12345".to_string(),
+            document_id: String::from("12345"),
             vss_id: uuid!("67e55044-10b1-426f-9247-bb680e5fe0c8"),
             ordering_uuid: Some(Uuid::new_v4()),
             offering: Offering { offer_prices: None },
@@ -215,7 +215,7 @@ mod tests {
             },
             ordering: Ordering {
                 order_data: OrderData {
-                    usage_state: "DEALER_YOUNG_USED".to_string(),
+                    usage_state: String::from("DEALER_YOUNG_USED"),
                 },
             },
         };
@@ -234,7 +234,7 @@ mod tests {
         #[test]
         fn should_return_price() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering {
@@ -255,7 +255,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -266,7 +266,7 @@ mod tests {
         #[test]
         fn should_return_none_when_no_offers_exist() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
@@ -280,7 +280,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -291,7 +291,7 @@ mod tests {
         #[test]
         fn should_return_none_when_offer_gross_price_doesnt_exist() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering {
@@ -312,7 +312,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -323,7 +323,7 @@ mod tests {
         #[test]
         fn should_return_none_when_offers_is_empty() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering {
@@ -339,7 +339,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -355,7 +355,7 @@ mod tests {
         #[test]
         fn should_return_discount_percentage() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering {
@@ -376,7 +376,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -387,7 +387,7 @@ mod tests {
         #[test]
         fn should_return_none_if_price_doesnt_exist() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
@@ -401,7 +401,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -417,7 +417,7 @@ mod tests {
         #[test]
         fn should_return_true_if_name_exists() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
@@ -427,11 +427,11 @@ mod tests {
                 vehicle_specification: VehicleSpecification {
                     model_and_option: ModelAndOption {
                         equipments: HashMap::from([(
-                            "TEST42".to_string(),
+                            String::from("TEST42"),
                             Equipment {
                                 name: HashMap::from([
-                                    ("default_FR".to_string(), "Test asdasdasd".to_string()),
-                                    ("fr_FR".to_string(), "Another name".to_string()),
+                                    (String::from("default_FR"), String::from("Test asdasdasd")),
+                                    (String::from("fr_FR"), String::from("Another name")),
                                 ]),
                             },
                         )]),
@@ -439,7 +439,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -452,7 +452,7 @@ mod tests {
         #[test]
         fn should_return_false_if_name_doesnt_exist() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
@@ -466,7 +466,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -477,7 +477,7 @@ mod tests {
         #[test]
         fn should_return_false_if_name_is_empty() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
@@ -491,7 +491,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -507,7 +507,7 @@ mod tests {
         #[test]
         fn should_return_true_when_equipment_names_exist() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
@@ -518,32 +518,35 @@ mod tests {
                     model_and_option: ModelAndOption {
                         equipments: HashMap::from([
                             (
-                                "TEST42".to_string(),
-                                Equipment {
-                                    name: HashMap::from([
-                                        ("default_FR".to_string(), "Test asdasdasd".to_string()),
-                                        ("fr_FR".to_string(), "Another name".to_string()),
-                                    ]),
-                                },
-                            ),
-                            (
-                                "TEST43".to_string(),
-                                Equipment {
-                                    name: HashMap::from([
-                                        ("default_FR".to_string(), "My equipment".to_string()),
-                                        ("fr_FR".to_string(), "Another name2".to_string()),
-                                    ]),
-                                },
-                            ),
-                            (
-                                "TEST44".to_string(),
+                                String::from("TEST42"),
                                 Equipment {
                                     name: HashMap::from([
                                         (
-                                            "default_FR".to_string(),
-                                            "My second equipment".to_string(),
+                                            String::from("default_FR"),
+                                            String::from("Test asdasdasd"),
                                         ),
-                                        ("fr_FR".to_string(), "Another name3".to_string()),
+                                        (String::from("fr_FR"), String::from("Another name")),
+                                    ]),
+                                },
+                            ),
+                            (
+                                String::from("TEST43"),
+                                Equipment {
+                                    name: HashMap::from([
+                                        (String::from("default_FR"), String::from("My equipment")),
+                                        (String::from("fr_FR"), String::from("Another name2")),
+                                    ]),
+                                },
+                            ),
+                            (
+                                String::from("TEST44"),
+                                Equipment {
+                                    name: HashMap::from([
+                                        (
+                                            String::from("default_FR"),
+                                            String::from("My second equipment"),
+                                        ),
+                                        (String::from("fr_FR"), String::from("Another name3")),
                                     ]),
                                 },
                             ),
@@ -552,13 +555,13 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
 
-            let result =
-                vehicle.has_equipment_names(vec!["Test".to_string(), "My equipment".to_string()]);
+            let result = vehicle
+                .has_equipment_names(vec![String::from("Test"), String::from("My equipment")]);
 
             assert_eq!(result, true);
         }
@@ -566,7 +569,7 @@ mod tests {
         #[test]
         fn should_return_false_if_equipment_list_is_empty() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
@@ -580,12 +583,12 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
 
-            let result = vehicle.has_equipment_names(vec!["Test".to_string()]);
+            let result = vehicle.has_equipment_names(vec![String::from("Test")]);
 
             assert_eq!(result, false);
         }
@@ -593,7 +596,7 @@ mod tests {
         #[test]
         fn should_return_false_if_equipment_names_is_empty() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
@@ -604,32 +607,35 @@ mod tests {
                     model_and_option: ModelAndOption {
                         equipments: HashMap::from([
                             (
-                                "TEST42".to_string(),
-                                Equipment {
-                                    name: HashMap::from([
-                                        ("default_FR".to_string(), "Test asdasdasd".to_string()),
-                                        ("fr_FR".to_string(), "Another name".to_string()),
-                                    ]),
-                                },
-                            ),
-                            (
-                                "TEST43".to_string(),
-                                Equipment {
-                                    name: HashMap::from([
-                                        ("default_FR".to_string(), "My equipment".to_string()),
-                                        ("fr_FR".to_string(), "Another name2".to_string()),
-                                    ]),
-                                },
-                            ),
-                            (
-                                "TEST44".to_string(),
+                                String::from("TEST42"),
                                 Equipment {
                                     name: HashMap::from([
                                         (
-                                            "default_FR".to_string(),
-                                            "My second equipment".to_string(),
+                                            String::from("default_FR"),
+                                            String::from("Test asdasdasd"),
                                         ),
-                                        ("fr_FR".to_string(), "Another name3".to_string()),
+                                        (String::from("fr_FR"), String::from("Another name")),
+                                    ]),
+                                },
+                            ),
+                            (
+                                String::from("TEST43"),
+                                Equipment {
+                                    name: HashMap::from([
+                                        (String::from("default_FR"), String::from("My equipment")),
+                                        (String::from("fr_FR"), String::from("Another name2")),
+                                    ]),
+                                },
+                            ),
+                            (
+                                String::from("TEST44"),
+                                Equipment {
+                                    name: HashMap::from([
+                                        (
+                                            String::from("default_FR"),
+                                            String::from("My second equipment"),
+                                        ),
+                                        (String::from("fr_FR"), String::from("Another name3")),
                                     ]),
                                 },
                             ),
@@ -638,7 +644,7 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
@@ -651,7 +657,7 @@ mod tests {
         #[test]
         fn should_return_false_if_one_or_many_equipment_names_not_be_found() {
             let vehicle = Vehicle {
-                document_id: "12345".to_string(),
+                document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
                 ordering_uuid: Some(Uuid::new_v4()),
                 offering: Offering { offer_prices: None },
@@ -662,32 +668,35 @@ mod tests {
                     model_and_option: ModelAndOption {
                         equipments: HashMap::from([
                             (
-                                "TEST42".to_string(),
-                                Equipment {
-                                    name: HashMap::from([
-                                        ("default_FR".to_string(), "Test asdasdasd".to_string()),
-                                        ("fr_FR".to_string(), "Another name".to_string()),
-                                    ]),
-                                },
-                            ),
-                            (
-                                "TEST43".to_string(),
-                                Equipment {
-                                    name: HashMap::from([
-                                        ("default_FR".to_string(), "My equipment".to_string()),
-                                        ("fr_FR".to_string(), "Another name2".to_string()),
-                                    ]),
-                                },
-                            ),
-                            (
-                                "TEST44".to_string(),
+                                String::from("TEST42"),
                                 Equipment {
                                     name: HashMap::from([
                                         (
-                                            "default_FR".to_string(),
-                                            "My second equipment".to_string(),
+                                            String::from("default_FR"),
+                                            String::from("Test asdasdasd"),
                                         ),
-                                        ("fr_FR".to_string(), "Another name3".to_string()),
+                                        (String::from("fr_FR"), String::from("Another name")),
+                                    ]),
+                                },
+                            ),
+                            (
+                                String::from("TEST43"),
+                                Equipment {
+                                    name: HashMap::from([
+                                        (String::from("default_FR"), String::from("My equipment")),
+                                        (String::from("fr_FR"), String::from("Another name2")),
+                                    ]),
+                                },
+                            ),
+                            (
+                                String::from("TEST44"),
+                                Equipment {
+                                    name: HashMap::from([
+                                        (
+                                            String::from("default_FR"),
+                                            String::from("My second equipment"),
+                                        ),
+                                        (String::from("fr_FR"), String::from("Another name3")),
                                     ]),
                                 },
                             ),
@@ -696,13 +705,13 @@ mod tests {
                 },
                 ordering: Ordering {
                     order_data: OrderData {
-                        usage_state: "NEW".to_string(),
+                        usage_state: String::from("NEW"),
                     },
                 },
             };
 
             let result =
-                vehicle.has_equipment_names(vec!["Test".to_string(), "Not found".to_string()]);
+                vehicle.has_equipment_names(vec![String::from("Test"), String::from("Not found")]);
 
             assert_eq!(result, false);
         }
