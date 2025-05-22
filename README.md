@@ -2,6 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-🦀-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Test Suite](https://github.com/Riges/bmw-finder/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Riges/bmw-finder/actions/workflows/ci.yml)
 
 Find new and used BMWs, display their details, and sort them by price.
 
