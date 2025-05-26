@@ -32,12 +32,10 @@ async fn main() {
     let mut filtered_vehicles: Vec<&Vehicle> = found_vehicles
         .values()
         .filter(|vehicle| {
-            if let Some(equipment_names) = configuration.equipment_names() {
-                if !vehicle.has_equipment_names(equipment_names) {
-                    return false;
-                }
-            }
-            true
+            configuration
+                .equipment_names()
+                .map(|equipment_names| vehicle.has_equipment_names(equipment_names))
+                .unwrap_or(true)
         })
         .collect();
 
