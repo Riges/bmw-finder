@@ -170,6 +170,7 @@ pub async fn search(configuration: &Configuration) -> Result<HashMap<uuid::Uuid,
     Ok(vehicles)
 }
 
+#[allow(dead_code)]
 pub async fn search_by_vss_id(
     configuration: &Configuration,
     vss_id: &Uuid,

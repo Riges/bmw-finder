@@ -1,6 +1,6 @@
 use config::Condition;
 
-use search::{search, search_by_vss_id};
+use search::search;
 use vehicle::Vehicle;
 
 mod config;
@@ -56,18 +56,10 @@ async fn main() {
         //     continue;
         // }
 
-        let vehicle = match vehicle.get_price() {
-            Some(_) => vehicle.clone(),
-            None => search_by_vss_id(&configuration, &vehicle.vss_id)
-                .await
-                .unwrap_or_else(|_| Some(vehicle.clone()))
-                .unwrap(),
-        };
-
         println!(
             "{0: <36} | {1: <12} | {2: <8} | {3}",
             vehicle.vss_id,
-            format!("{:.2} €", vehicle.get_price().unwrap_or_default()),
+            format!("{:.2} €", vehicle.get_price()),
             format!(
                 "{:.2} %",
                 vehicle.get_discount_percentage().unwrap_or_default()
@@ -79,13 +71,8 @@ async fn main() {
 
 // Order by price, none as last
 fn sort_by_price(vehicle_a: &Vehicle, vehicle_b: &Vehicle) -> std::cmp::Ordering {
-    let price_a = vehicle_a.get_price();
-    let price_b = vehicle_b.get_price();
-
-    match (price_a, price_b) {
-        (Some(p1), Some(p2)) => p1.partial_cmp(&p2).unwrap(),
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (None, None) => std::cmp::Ordering::Equal,
-    }
+    vehicle_a
+        .get_price()
+        .partial_cmp(&vehicle_b.get_price())
+        .unwrap_or(std::cmp::Ordering::Equal)
 }
