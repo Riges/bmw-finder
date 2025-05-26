@@ -79,7 +79,7 @@ impl Vehicle {
             })
     }
 
-    pub fn has_equipment_names(&self, equipment_names: Vec<String>) -> bool {
+    pub fn has_equipment_names(&self, equipment_names: &[String]) -> bool {
         if equipment_names.is_empty() {
             return true;
         }
@@ -563,8 +563,8 @@ mod tests {
                 },
             };
 
-            let result = vehicle
-                .has_equipment_names(vec![String::from("Test"), String::from("My equipment")]);
+            let names = vec![String::from("Test"), String::from("My equipment")];
+            let result = vehicle.has_equipment_names(&names);
 
             assert_eq!(result, true);
         }
@@ -591,13 +591,14 @@ mod tests {
                 },
             };
 
-            let result = vehicle.has_equipment_names(vec![String::from("Test")]);
+            let names = vec![String::from("Test")];
+            let result = vehicle.has_equipment_names(&names);
 
             assert_eq!(result, false);
         }
 
         #[test]
-        fn should_return_false_if_equipment_names_is_empty() {
+        fn should_return_true_if_equipment_names_is_empty() {
             let vehicle = Vehicle {
                 document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
@@ -652,7 +653,8 @@ mod tests {
                 },
             };
 
-            let result = vehicle.has_equipment_names(vec![]);
+            let names: Vec<String> = vec![];
+            let result = vehicle.has_equipment_names(&names);
 
             assert_eq!(result, true);
         }
@@ -713,8 +715,8 @@ mod tests {
                 },
             };
 
-            let result =
-                vehicle.has_equipment_names(vec![String::from("Test"), String::from("Not found")]);
+            let names = vec![String::from("Test"), String::from("Not found")];
+            let result = vehicle.has_equipment_names(&names);
 
             assert_eq!(result, false);
         }

@@ -29,22 +29,19 @@ async fn main() {
     println!("Found {} vehicles:", found_vehicles.len());
 
     // filter cars by expected equipment
-    let mut filtered_vehicles = found_vehicles
-        .iter()
-        .filter(|(_, vehicle)| {
-            if configuration
-                .filter_equipment
-                .clone()
-                .is_some_and(|equipment_names| !vehicle.has_equipment_names(equipment_names))
-            {
-                return false;
+    let mut filtered_vehicles: Vec<&Vehicle> = found_vehicles
+        .values()
+        .filter(|vehicle| {
+            if let Some(ref equipment_names) = configuration.filter_equipment {
+                if !vehicle.has_equipment_names(equipment_names) {
+                    return false;
+                }
             }
             true
         })
-        .map(|(_, vehicle)| vehicle.clone())
-        .collect::<Vec<Vehicle>>();
+        .collect();
 
-    filtered_vehicles.sort_by(sort_by_price);
+    filtered_vehicles.sort_by(|a, b| sort_by_price(a, b));
 
     println!(
         "{0: <36} | {1: <12} | {2: <8} | {3}",
@@ -52,10 +49,6 @@ async fn main() {
     );
 
     for vehicle in filtered_vehicles {
-        // if !vehicle.has_equipment_name_like("Pack Innovation") {
-        //     continue;
-        // }
-
         println!(
             "{0: <36} | {1: <12} | {2: <8} | {3}",
             vehicle.vss_id,
