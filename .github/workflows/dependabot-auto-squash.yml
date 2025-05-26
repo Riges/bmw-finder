@@ -1,0 +1,20 @@
+name: Dependabot auto-squash
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'riges/bmw-finder'
+    steps:
+      - name: Dependabot metadata
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@v2
+      - name: Enable auto-squash for Dependabot PRs
+        if: ${{ steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch'}}
+        run: gh pr merge --auto --squash "${{github.event.pull_request.html_url}}"
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
