@@ -6,15 +6,24 @@ pub enum Condition {
     Used,
 }
 
-#[derive(Clone)]
+pub type ModelList = Vec<String>;
+pub type EquipmentList = Vec<String>;
+
+#[derive(Clone, Debug)]
 pub struct Configuration {
-    pub models: Vec<String>,
     pub condition: Condition,
     pub limit: Option<u32>,
-    pub filter_equipment: Option<Vec<String>>,
+    models: ModelList,
+    filter_equipment: Option<EquipmentList>,
 }
 
 impl Configuration {
+    pub fn models(&self) -> &[String] {
+        &self.models
+    }
+    pub fn filter_equipment(&self) -> Option<&[String]> {
+        self.filter_equipment.as_deref()
+    }
     fn new(args: Args) -> Self {
         Configuration {
             models: args.model,

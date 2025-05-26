@@ -128,7 +128,7 @@ pub async fn search(configuration: &Configuration) -> Result<HashMap<uuid::Uuid,
         search_context: vec![SearchContext {
             model: Some(SearchModel {
                 marketing_model_range: FilterWithValues {
-                    value: configuration.models.clone(),
+                    value: configuration.models().to_vec(),
                 },
             }),
             vss_ids: None,

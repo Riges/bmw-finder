@@ -21,7 +21,7 @@ async fn main() {
             Condition::New => "new",
             Condition::Used => "used",
         },
-        configuration.models.join(", ")
+        configuration.models().join(", ")
     );
 
     // launch search
@@ -32,7 +32,7 @@ async fn main() {
     let mut filtered_vehicles: Vec<&Vehicle> = found_vehicles
         .values()
         .filter(|vehicle| {
-            if let Some(ref equipment_names) = configuration.filter_equipment {
+            if let Some(equipment_names) = configuration.filter_equipment() {
                 if !vehicle.has_equipment_names(equipment_names) {
                     return false;
                 }
