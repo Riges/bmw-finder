@@ -43,6 +43,15 @@ cargo run -- --equipment-name "Pack M Sport" --equipment-name "Pack Innovation"
 # Combined example
 cargo run -- --model iX1_U11E --used -l 3 \
   --equipment-name "Pack M Sport"
+
+# Output only the number of vehicles and search parameters (default)
+cargo run -- --model iX1_U11E --used -l 3 --equipment-name "Pack M Sport"
+
+# Output full vehicle details as text
+cargo run -- --model iX1_U11E --used -l 3 --equipment-name "Pack M Sport" --output text
+
+# Output filtered vehicles as JSON
+cargo run -- --model iX1_U11E --used -l 3 --equipment-name "Pack M Sport" --output json
 ```
 
 ## Options
@@ -53,6 +62,7 @@ cargo run -- --model iX1_U11E --used -l 3 \
 | `--used`                  | Search for used vehicles                            | `false`    |
 | `-l`, `--limit <NUMBER>`  | Maximum number of results                           | none       |
 | `--equipment-name <NAME>` | Filter by equipment/pack name (repeatable, by name) | none       |
+| `--output <MODE>`         | Output mode: `ui` (default), `text`, or `json`      | `ui`       |
 
 ---
 

@@ -6,6 +6,25 @@ pub enum Condition {
     Used,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OutputMode {
+    Ui,
+    Text,
+    Json,
+}
+
+impl std::str::FromStr for OutputMode {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "ui" => Ok(OutputMode::Ui),
+            "text" => Ok(OutputMode::Text),
+            "json" => Ok(OutputMode::Json),
+            _ => Err(format!("Invalid output mode: {}", s)),
+        }
+    }
+}
+
 type ModelList = Vec<String>;
 type EquipmentNameList = Vec<String>;
 
@@ -13,6 +32,7 @@ type EquipmentNameList = Vec<String>;
 pub struct Configuration {
     pub condition: Condition,
     pub limit: Option<u32>,
+    output: OutputMode,
     models: ModelList,
     equipment_names: Option<EquipmentNameList>,
 }
@@ -26,6 +46,10 @@ impl Configuration {
         self.equipment_names.as_deref()
     }
 
+    pub fn output(&self) -> OutputMode {
+        self.output
+    }
+
     fn new(args: Args) -> Self {
         Configuration {
             models: args.model,
@@ -36,6 +60,7 @@ impl Configuration {
             },
             limit: args.limit,
             equipment_names: args.equipment_names,
+            output: args.output,
         }
     }
 }
@@ -62,6 +87,10 @@ struct Args {
     /// Filter by equipment/pack name on all found cars
     #[arg(long = "equipment-name", value_name = "NAME")]
     equipment_names: Option<Vec<String>>,
+
+    /// Output mode: Ui (default), text, or json
+    #[arg(long, value_enum, default_value = "ui")]
+    output: OutputMode,
 }
 
 #[cfg(test)]
@@ -78,6 +107,7 @@ mod tests {
                 used: true,
                 limit: Some(5),
                 equipment_names: Some(vec![String::from("Pack Innovation")]),
+                output: OutputMode::Text,
             };
 
             let config = Configuration::new(args);
@@ -89,6 +119,7 @@ mod tests {
                 config.equipment_names,
                 Some(vec![String::from("Pack Innovation")])
             );
+            assert_eq!(config.output, OutputMode::Text);
         }
     }
 
@@ -110,6 +141,8 @@ mod tests {
                 "Pack M Sport",
                 "--model",
                 "My second Model",
+                "--output",
+                "json",
             ]);
 
             assert_eq!(
@@ -125,6 +158,7 @@ mod tests {
                     String::from("Pack M Sport")
                 ])
             );
+            assert_eq!(args.output, OutputMode::Json);
         }
 
         #[test]
@@ -135,6 +169,40 @@ mod tests {
             assert_eq!(args.used, false);
             assert_eq!(args.limit, None);
             assert_eq!(args.equipment_names, None);
+            assert_eq!(args.output, OutputMode::Ui);
+        }
+    }
+
+    mod output_mode_fromstr {
+        use super::*;
+        use std::str::FromStr;
+
+        #[test]
+        fn parses_ui_case_insensitive() {
+            assert_eq!(OutputMode::from_str("ui"), Ok(OutputMode::Ui));
+            assert_eq!(OutputMode::from_str("UI"), Ok(OutputMode::Ui));
+            assert_eq!(OutputMode::from_str("Ui"), Ok(OutputMode::Ui));
+        }
+
+        #[test]
+        fn parses_text_case_insensitive() {
+            assert_eq!(OutputMode::from_str("text"), Ok(OutputMode::Text));
+            assert_eq!(OutputMode::from_str("TEXT"), Ok(OutputMode::Text));
+            assert_eq!(OutputMode::from_str("Text"), Ok(OutputMode::Text));
+        }
+
+        #[test]
+        fn parses_json_case_insensitive() {
+            assert_eq!(OutputMode::from_str("json"), Ok(OutputMode::Json));
+            assert_eq!(OutputMode::from_str("JSON"), Ok(OutputMode::Json));
+            assert_eq!(OutputMode::from_str("Json"), Ok(OutputMode::Json));
+        }
+
+        #[test]
+        fn returns_err_on_invalid_value() {
+            assert!(OutputMode::from_str("foo").is_err());
+            assert!(OutputMode::from_str("").is_err());
+            assert!(OutputMode::from_str("123").is_err());
         }
     }
 }

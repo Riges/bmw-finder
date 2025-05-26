@@ -41,12 +41,25 @@ async fn main() {
 
     filtered_vehicles.sort_by(|a, b| sort_by_price(a, b));
 
+    match configuration.output() {
+        config::OutputMode::Text => {
+            print_text_output(&filtered_vehicles);
+        }
+        config::OutputMode::Json => {
+            print_json_output(&filtered_vehicles);
+        }
+        config::OutputMode::Ui => {
+            print_ui_output(&configuration, &filtered_vehicles);
+        }
+    }
+}
+
+fn print_text_output(vehicles: &[&Vehicle]) {
     println!(
         "{0: <36} | {1: <12} | {2: <8} | {3}",
         "Id", "Price", "Discount", "Link"
     );
-
-    for vehicle in filtered_vehicles {
+    for vehicle in vehicles {
         println!(
             "{0: <36} | {1: <12} | {2: <8} | {3}",
             vehicle.vss_id,
@@ -58,6 +71,24 @@ async fn main() {
             vehicle.get_link()
         );
     }
+}
+
+fn print_json_output(vehicles: &[&Vehicle]) {
+    let json = serde_json::to_string_pretty(vehicles).unwrap();
+    println!("{}", json);
+}
+
+fn print_ui_output(configuration: &config::Configuration, vehicles: &[&Vehicle]) {
+    println!("Search parameters:");
+    println!("  Condition: {:?}", configuration.condition);
+    println!("  Models: {}", configuration.models().join(", "));
+    if let Some(limit) = configuration.limit {
+        println!("  Limit: {}", limit);
+    }
+    if let Some(equipment_names) = configuration.equipment_names() {
+        println!("  Equipment names: {}", equipment_names.join(", "));
+    }
+    println!("Filtered vehicles found: {}", vehicles.len());
 }
 
 // Order by price, none as last
