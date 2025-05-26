@@ -39,21 +39,24 @@ impl Vehicle {
         )
     }
 
-    pub fn get_price(&self) -> Option<f32> {
-        {
-            match self.offering.offer_prices {
-                Some(ref offer_prices) => offer_prices
-                    .values()
-                    .next()
-                    .and_then(|offer_price| offer_price.offer_gross_price),
-                None => None,
-            }
+    pub fn get_price(&self) -> f32 {
+        self.get_offer_price()
+            .unwrap_or(self.price.vehicle_gross_price)
+    }
+
+    fn get_offer_price(&self) -> Option<f32> {
+        match self.offering.offer_prices {
+            Some(ref offer_prices) => offer_prices
+                .values()
+                .next()
+                .and_then(|offer_price| offer_price.offer_gross_price),
+            None => None,
         }
     }
 
     pub fn get_discount_percentage(&self) -> Option<f32> {
         let default_price = self.price.vehicle_gross_price;
-        let offer_price = self.get_price()?;
+        let offer_price = self.get_offer_price()?;
         Some((default_price - offer_price) / default_price * 100.0)
     }
 
@@ -76,7 +79,7 @@ impl Vehicle {
             })
     }
 
-    pub fn has_equipment_names(&self, equipment_names: Vec<String>) -> bool {
+    pub fn has_equipment_names(&self, equipment_names: &[String]) -> bool {
         if equipment_names.is_empty() {
             return true;
         }
@@ -227,7 +230,7 @@ mod tests {
         )
     }
 
-    mod get_price {
+    mod get_offer_price {
         use super::*;
         use uuid::Uuid;
 
@@ -260,7 +263,7 @@ mod tests {
                 },
             };
 
-            assert_eq!(vehicle.get_price(), Some(100.0));
+            assert_eq!(vehicle.get_offer_price(), Some(100.0));
         }
 
         #[test]
@@ -285,7 +288,7 @@ mod tests {
                 },
             };
 
-            assert_eq!(vehicle.get_price(), None);
+            assert_eq!(vehicle.get_offer_price(), None);
         }
 
         #[test]
@@ -317,7 +320,7 @@ mod tests {
                 },
             };
 
-            assert_eq!(vehicle.get_price(), None);
+            assert_eq!(vehicle.get_offer_price(), None);
         }
 
         #[test]
@@ -344,7 +347,7 @@ mod tests {
                 },
             };
 
-            assert_eq!(vehicle.get_price(), None);
+            assert_eq!(vehicle.get_offer_price(), None);
         }
     }
 
@@ -560,8 +563,8 @@ mod tests {
                 },
             };
 
-            let result = vehicle
-                .has_equipment_names(vec![String::from("Test"), String::from("My equipment")]);
+            let names = vec![String::from("Test"), String::from("My equipment")];
+            let result = vehicle.has_equipment_names(&names);
 
             assert_eq!(result, true);
         }
@@ -588,13 +591,14 @@ mod tests {
                 },
             };
 
-            let result = vehicle.has_equipment_names(vec![String::from("Test")]);
+            let names = vec![String::from("Test")];
+            let result = vehicle.has_equipment_names(&names);
 
             assert_eq!(result, false);
         }
 
         #[test]
-        fn should_return_false_if_equipment_names_is_empty() {
+        fn should_return_true_if_equipment_names_is_empty() {
             let vehicle = Vehicle {
                 document_id: String::from("12345"),
                 vss_id: Uuid::new_v4(),
@@ -649,7 +653,8 @@ mod tests {
                 },
             };
 
-            let result = vehicle.has_equipment_names(vec![]);
+            let names: Vec<String> = vec![];
+            let result = vehicle.has_equipment_names(&names);
 
             assert_eq!(result, true);
         }
@@ -710,10 +715,127 @@ mod tests {
                 },
             };
 
-            let result =
-                vehicle.has_equipment_names(vec![String::from("Test"), String::from("Not found")]);
+            let names = vec![String::from("Test"), String::from("Not found")];
+            let result = vehicle.has_equipment_names(&names);
 
             assert_eq!(result, false);
+        }
+    }
+
+    mod get_price {
+        use super::*;
+        use uuid::Uuid;
+
+        #[test]
+        fn should_return_offer_price_when_exists() {
+            let vehicle = Vehicle {
+                document_id: String::from("12345"),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering {
+                    offer_prices: Some(HashMap::from([(
+                        "FR".to_string(),
+                        OfferPrice {
+                            offer_gross_price: Some(100.0),
+                        },
+                    )])),
+                },
+                price: VehiclePrice {
+                    vehicle_gross_price: 42.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: String::from("NEW"),
+                    },
+                },
+            };
+            assert_eq!(vehicle.get_price(), 100.0);
+        }
+
+        #[test]
+        fn should_return_catalog_price_when_no_offer() {
+            let vehicle = Vehicle {
+                document_id: String::from("12345"),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering { offer_prices: None },
+                price: VehiclePrice {
+                    vehicle_gross_price: 42.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: String::from("NEW"),
+                    },
+                },
+            };
+            assert_eq!(vehicle.get_price(), 42.0);
+        }
+
+        #[test]
+        fn should_return_catalog_price_when_offer_is_none() {
+            let vehicle = Vehicle {
+                document_id: String::from("12345"),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering {
+                    offer_prices: Some(HashMap::from([(
+                        "FR".to_string(),
+                        OfferPrice {
+                            offer_gross_price: None,
+                        },
+                    )])),
+                },
+                price: VehiclePrice {
+                    vehicle_gross_price: 55.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: String::from("NEW"),
+                    },
+                },
+            };
+            assert_eq!(vehicle.get_price(), 55.0);
+        }
+
+        #[test]
+        fn should_return_catalog_price_when_offers_is_empty() {
+            let vehicle = Vehicle {
+                document_id: String::from("12345"),
+                vss_id: Uuid::new_v4(),
+                ordering_uuid: Some(Uuid::new_v4()),
+                offering: Offering {
+                    offer_prices: Some(HashMap::new()),
+                },
+                price: VehiclePrice {
+                    vehicle_gross_price: 77.0,
+                },
+                vehicle_specification: VehicleSpecification {
+                    model_and_option: ModelAndOption {
+                        equipments: HashMap::new(),
+                    },
+                },
+                ordering: Ordering {
+                    order_data: OrderData {
+                        usage_state: String::from("NEW"),
+                    },
+                },
+            };
+            assert_eq!(vehicle.get_price(), 77.0);
         }
     }
 }

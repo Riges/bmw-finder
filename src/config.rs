@@ -6,15 +6,26 @@ pub enum Condition {
     Used,
 }
 
-#[derive(Clone)]
+type ModelList = Vec<String>;
+type EquipmentNameList = Vec<String>;
+
+#[derive(Clone, Debug)]
 pub struct Configuration {
-    pub models: Vec<String>,
     pub condition: Condition,
     pub limit: Option<u32>,
-    pub filter_equipment: Option<Vec<String>>,
+    models: ModelList,
+    equipment_names: Option<EquipmentNameList>,
 }
 
 impl Configuration {
+    pub fn models(&self) -> &[String] {
+        &self.models
+    }
+
+    pub fn equipment_names(&self) -> Option<&[String]> {
+        self.equipment_names.as_deref()
+    }
+
     fn new(args: Args) -> Self {
         Configuration {
             models: args.model,
@@ -24,7 +35,7 @@ impl Configuration {
                 Condition::New
             },
             limit: args.limit,
-            filter_equipment: args.filter_equipment,
+            equipment_names: args.equipment_names,
         }
     }
 }
@@ -48,9 +59,9 @@ struct Args {
     #[arg(short, long)]
     limit: Option<u32>,
 
-    /// Equipment filter on all found cars
-    #[arg(long)]
-    filter_equipment: Option<Vec<String>>,
+    /// Filter by equipment/pack name on all found cars
+    #[arg(long = "equipment-name", value_name = "NAME")]
+    equipment_names: Option<Vec<String>>,
 }
 
 #[cfg(test)]
@@ -66,7 +77,7 @@ mod tests {
                 model: vec![String::from("My Model")],
                 used: true,
                 limit: Some(5),
-                filter_equipment: Some(vec![String::from("Pack Innovation")]),
+                equipment_names: Some(vec![String::from("Pack Innovation")]),
             };
 
             let config = Configuration::new(args);
@@ -75,7 +86,7 @@ mod tests {
             assert_eq!(config.condition, Condition::Used);
             assert_eq!(config.limit, Some(5));
             assert_eq!(
-                config.filter_equipment,
+                config.equipment_names,
                 Some(vec![String::from("Pack Innovation")])
             );
         }
@@ -93,9 +104,9 @@ mod tests {
                 "--used",
                 "--limit",
                 "5",
-                "--filter-equipment",
+                "--equipment-name",
                 "Pack Innovation",
-                "--filter-equipment",
+                "--equipment-name",
                 "Pack M Sport",
                 "--model",
                 "My second Model",
@@ -108,7 +119,7 @@ mod tests {
             assert_eq!(args.used, true);
             assert_eq!(args.limit, Some(5));
             assert_eq!(
-                args.filter_equipment,
+                args.equipment_names,
                 Some(vec![
                     String::from("Pack Innovation"),
                     String::from("Pack M Sport")
@@ -123,7 +134,7 @@ mod tests {
             assert_eq!(args.model, vec![String::from("iX2_U10E")]);
             assert_eq!(args.used, false);
             assert_eq!(args.limit, None);
-            assert_eq!(args.filter_equipment, None);
+            assert_eq!(args.equipment_names, None);
         }
     }
 }

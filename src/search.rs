@@ -128,7 +128,7 @@ pub async fn search(configuration: &Configuration) -> Result<HashMap<uuid::Uuid,
         search_context: vec![SearchContext {
             model: Some(SearchModel {
                 marketing_model_range: FilterWithValues {
-                    value: configuration.models.clone(),
+                    value: configuration.models().to_vec(),
                 },
             }),
             vss_ids: None,
@@ -156,20 +156,22 @@ pub async fn search(configuration: &Configuration) -> Result<HashMap<uuid::Uuid,
         })
         .buffer_unordered(CONCURRENT_REQUESTS)
         .try_fold(
-            HashMap::with_capacity(calls.len() * (MAX_RESULT as usize)),
+            Vec::with_capacity(calls.len() * (MAX_RESULT as usize)),
             |mut acc, resp| async move {
-                for hit in resp.hits {
-                    acc.insert(hit.vehicle.vss_id, hit.vehicle);
-                }
+                let SearchResponse { hits, .. } = resp;
+                acc.extend(hits.into_iter().map(|hit| hit.vehicle));
                 Ok(acc)
             },
         )
         .await
         .map_err(|_| anyhow::anyhow!("Error in one of the requests"))?;
 
-    Ok(vehicles)
+    let vehicles_map: HashMap<Uuid, Vehicle> =
+        vehicles.into_iter().map(|v| (v.vss_id, v)).collect();
+    Ok(vehicles_map)
 }
 
+#[allow(dead_code)]
 pub async fn search_by_vss_id(
     configuration: &Configuration,
     vss_id: &Uuid,
