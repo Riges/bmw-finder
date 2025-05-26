@@ -37,22 +37,22 @@ cargo run -- --limit 5
 # or short form
 cargo run -- -l 5
 
-# Filter by equipment (repeatable)
-cargo run -- --filter-equipment "Pack M Sport" --filter-equipment "Pack Innovation"
+# Filter by equipment/pack name (repeatable)
+cargo run -- --equipment-name "Pack M Sport" --equipment-name "Pack Innovation"
 
 # Combined example
 cargo run -- --model iX1_U11E --used -l 3 \
-  --filter-equipment "Pack M Sport"
+  --equipment-name "Pack M Sport"
 ```
 
 ## Options
 
-| Flag                             | Description                       | Default    |
-| -------------------------------- | --------------------------------- | ---------- |
-| `--model <MODEL>`                | Models to search for (repeatable) | `iX2_U10E` |
-| `--used`                         | Search for used vehicles          | `false`    |
-| `-l`, `--limit <NUMBER>`         | Maximum number of results         | none       |
-| `--filter-equipment <EQUIPMENT>` | Filter by equipment (repeatable)  | none       |
+| Flag                      | Description                                         | Default    |
+| ------------------------- | --------------------------------------------------- | ---------- |
+| `--model <MODEL>`         | Models to search for (repeatable)                   | `iX2_U10E` |
+| `--used`                  | Search for used vehicles                            | `false`    |
+| `-l`, `--limit <NUMBER>`  | Maximum number of results                           | none       |
+| `--equipment-name <NAME>` | Filter by equipment/pack name (repeatable, by name) | none       |
 
 ---
 

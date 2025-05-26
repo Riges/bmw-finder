@@ -28,11 +28,11 @@ async fn main() {
     let found_vehicles = search(&configuration).await.unwrap();
     println!("Found {} vehicles:", found_vehicles.len());
 
-    // filter cars by expected equipment
+    // filter cars by expected equipment name
     let mut filtered_vehicles: Vec<&Vehicle> = found_vehicles
         .values()
         .filter(|vehicle| {
-            if let Some(equipment_names) = configuration.filter_equipment() {
+            if let Some(equipment_names) = configuration.equipment_names() {
                 if !vehicle.has_equipment_names(equipment_names) {
                     return false;
                 }
