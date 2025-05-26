@@ -44,14 +44,21 @@ cargo run -- --equipment-name "Pack M Sport" --equipment-name "Pack Innovation"
 cargo run -- --model iX1_U11E --used -l 3 \
   --equipment-name "Pack M Sport"
 
-# Output only the number of vehicles and search parameters (default)
+# Output only the number of vehicles and search parameters (default UI)
 cargo run -- --model iX1_U11E --used -l 3 --equipment-name "Pack M Sport"
 
-# Output full vehicle details as text
-cargo run -- --model iX1_U11E --used -l 3 --equipment-name "Pack M Sport" --output text
+# Output full vehicle details as text (shortcut)
+cargo run -- --model iX1_U11E --text
+# or equivalent
+cargo run -- --model iX1_U11E --output text
 
-# Output filtered vehicles as JSON
-cargo run -- --model iX1_U11E --used -l 3 --equipment-name "Pack M Sport" --output json
+# Output filtered vehicles as JSON (shortcut)
+cargo run -- --model iX1_U11E --json
+# or equivalent
+cargo run -- --model iX1_U11E --output json
+
+# The options --output, --text, and --json are mutually exclusive:
+# If you provide more than one, the program will exit with an explicit error.
 ```
 
 ## Options
@@ -63,6 +70,8 @@ cargo run -- --model iX1_U11E --used -l 3 --equipment-name "Pack M Sport" --outp
 | `-l`, `--limit <NUMBER>`  | Maximum number of results                           | none       |
 | `--equipment-name <NAME>` | Filter by equipment/pack name (repeatable, by name) | none       |
 | `--output <MODE>`         | Output mode: `ui` (default), `text`, or `json`      | `ui`       |
+| `--text`                  | Shortcut for `--output text` (mutually exclusive)   |            |
+| `--json`                  | Shortcut for `--output json` (mutually exclusive)   |            |
 
 ---
 

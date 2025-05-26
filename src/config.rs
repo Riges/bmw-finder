@@ -50,17 +50,20 @@ impl Configuration {
         self.output
     }
 
-    fn new(args: Args) -> Self {
-        Configuration {
-            models: args.model,
-            condition: if args.used {
-                Condition::Used
-            } else {
-                Condition::New
+    pub fn new(args: Args) -> Self {
+        Self {
+            condition: match args.used {
+                true => Condition::Used,
+                false => Condition::New,
             },
+            models: args.model,
             limit: args.limit,
             equipment_names: args.equipment_names,
-            output: args.output,
+            output: match (args.json, args.text) {
+                (true, _) => OutputMode::Json,
+                (false, true) => OutputMode::Text,
+                _ => args.output,
+            },
         }
     }
 }
@@ -71,7 +74,13 @@ pub fn load_config() -> Configuration {
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-struct Args {
+#[command(group(
+    clap::ArgGroup::new("output_mode")
+        .args(["output", "json", "text"])
+        .required(false)
+        .multiple(false)
+))]
+pub struct Args {
     /// Models to search for
     #[arg(long, default_value = "iX2_U10E")]
     model: Vec<String>,
@@ -89,8 +98,16 @@ struct Args {
     equipment_names: Option<Vec<String>>,
 
     /// Output mode: Ui (default), text, or json
-    #[arg(long, value_enum, default_value = "ui")]
+    #[arg(long, value_enum, default_value = "ui", group = "output_mode")]
     output: OutputMode,
+
+    /// Shortcut for --output text
+    #[arg(long, group = "output_mode")]
+    text: bool,
+
+    /// Shortcut for --output json
+    #[arg(long, group = "output_mode")]
+    json: bool,
 }
 
 #[cfg(test)]
@@ -108,6 +125,8 @@ mod tests {
                 limit: Some(5),
                 equipment_names: Some(vec![String::from("Pack Innovation")]),
                 output: OutputMode::Text,
+                text: false,
+                json: false,
             };
 
             let config = Configuration::new(args);
@@ -125,6 +144,31 @@ mod tests {
 
     mod args {
         use super::*;
+        use clap::error::ErrorKind;
+
+        #[test]
+        fn should_error_on_output_and_text() {
+            let res = Args::try_parse_from(["test", "--output", "json", "--text"]);
+            assert!(res.is_err());
+            let err = res.unwrap_err();
+            assert_eq!(err.kind(), ErrorKind::ArgumentConflict);
+        }
+
+        #[test]
+        fn should_error_on_output_and_json() {
+            let res = Args::try_parse_from(["test", "--output", "text", "--json"]);
+            assert!(res.is_err());
+            let err = res.unwrap_err();
+            assert_eq!(err.kind(), ErrorKind::ArgumentConflict);
+        }
+
+        #[test]
+        fn should_error_on_json_and_text() {
+            let res = Args::try_parse_from(["test", "--json", "--text"]);
+            assert!(res.is_err());
+            let err = res.unwrap_err();
+            assert_eq!(err.kind(), ErrorKind::ArgumentConflict);
+        }
 
         #[test]
         fn should_be_parsed() {
