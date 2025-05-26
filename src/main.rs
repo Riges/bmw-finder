@@ -1,5 +1,7 @@
-use config::Condition;
+use itertools::Itertools;
+use std::collections::HashMap;
 
+use config::{Condition, Configuration, OutputMode, load_config};
 use search::search;
 use vehicle::Vehicle;
 
@@ -9,7 +11,7 @@ mod vehicle;
 
 #[tokio::main]
 async fn main() {
-    let configuration = config::load_config();
+    let configuration = load_config();
 
     if configuration.limit.is_some() {
         println!("Limiting results to {}", configuration.limit.unwrap());
@@ -28,30 +30,37 @@ async fn main() {
     let found_vehicles = search(&configuration).await.unwrap();
     println!("Found {} vehicles:", found_vehicles.len());
 
-    // filter cars by expected equipment name
-    let mut filtered_vehicles: Vec<&Vehicle> = found_vehicles
-        .values()
-        .filter(|vehicle| {
-            configuration
-                .equipment_names()
-                .map(|equipment_names| vehicle.has_equipment_names(equipment_names))
-                .unwrap_or(true)
-        })
-        .collect();
-
-    filtered_vehicles.sort_by(|a, b| sort_by_price(a, b));
-
     match configuration.output() {
-        config::OutputMode::Text => {
-            print_text_output(&filtered_vehicles);
+        OutputMode::Text | OutputMode::Json => {
+            // filter cars by expected equipment name
+            let filtered_vehicles: Vec<&Vehicle> = found_vehicles
+                .values()
+                .filter(|vehicle| vehicle_matches_equipment(vehicle, &configuration))
+                .sorted_by(|a, b| sort_by_price(a, b))
+                .collect();
+            match configuration.output() {
+                OutputMode::Text => print_text_output(&filtered_vehicles),
+                OutputMode::Json => print_json_output(&filtered_vehicles),
+                _ => unreachable!(),
+            }
         }
-        config::OutputMode::Json => {
-            print_json_output(&filtered_vehicles);
-        }
-        config::OutputMode::Ui => {
-            print_ui_output(&configuration, &filtered_vehicles);
+        OutputMode::Ui => {
+            print_ui_output(&configuration, &found_vehicles);
         }
     }
+}
+
+fn print_json_output(vehicles: &[&Vehicle]) {
+    let json = serde_json::to_string_pretty(vehicles).unwrap();
+    println!("{}", json);
+}
+
+// Order by price, none as last
+fn sort_by_price(vehicle_a: &Vehicle, vehicle_b: &Vehicle) -> std::cmp::Ordering {
+    vehicle_a
+        .get_price()
+        .partial_cmp(&vehicle_b.get_price())
+        .unwrap_or(std::cmp::Ordering::Equal)
 }
 
 fn print_text_output(vehicles: &[&Vehicle]) {
@@ -73,28 +82,19 @@ fn print_text_output(vehicles: &[&Vehicle]) {
     }
 }
 
-fn print_json_output(vehicles: &[&Vehicle]) {
-    let json = serde_json::to_string_pretty(vehicles).unwrap();
-    println!("{}", json);
+fn vehicle_matches_equipment(vehicle: &Vehicle, configuration: &Configuration) -> bool {
+    configuration
+        .equipment_names()
+        .map(|equipment_names| vehicle.has_equipment_names(equipment_names))
+        .unwrap_or(true)
 }
 
-fn print_ui_output(configuration: &config::Configuration, vehicles: &[&Vehicle]) {
+fn print_ui_output(configuration: &Configuration, vehicles: &HashMap<uuid::Uuid, Vehicle>) {
     println!("Search parameters:");
     println!("  Condition: {:?}", configuration.condition);
     println!("  Models: {}", configuration.models().join(", "));
     if let Some(limit) = configuration.limit {
         println!("  Limit: {}", limit);
     }
-    if let Some(equipment_names) = configuration.equipment_names() {
-        println!("  Equipment names: {}", equipment_names.join(", "));
-    }
     println!("Filtered vehicles found: {}", vehicles.len());
-}
-
-// Order by price, none as last
-fn sort_by_price(vehicle_a: &Vehicle, vehicle_b: &Vehicle) -> std::cmp::Ordering {
-    vehicle_a
-        .get_price()
-        .partial_cmp(&vehicle_b.get_price())
-        .unwrap_or(std::cmp::Ordering::Equal)
 }
