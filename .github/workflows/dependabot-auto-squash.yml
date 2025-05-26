@@ -8,7 +8,7 @@ permissions:
 jobs:
   dependabot:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository_owner == 'riges' && github.event.repository.name == 'bmw-finder'
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository_owner == 'riges' && github.repository == 'riges/bmw-finder'
     steps:
       - name: Dependabot metadata
         id: dependabot-metadata
