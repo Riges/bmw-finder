@@ -1,127 +1,27 @@
-use std::{collections::HashMap, u8};
+//! BMW API search logic
+// Handles vehicle search logic, API requests, and result aggregation.
+
+use std::collections::HashMap;
 
 use anyhow::Result;
 use futures::{StreamExt, TryStreamExt, stream};
 use reqwest::{Client, Url};
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{
-    config::{Condition, Configuration},
-    vehicle::Vehicle,
-};
+use crate::config::{Condition, Configuration};
+use crate::vehicle::Vehicle;
+pub mod dto;
+
+use self::dto::*;
 
 const NEW_CAR_URL: &str = "https://stolo-data-service.prod.stolo.eu-central-1.aws.bmw.cloud/vehiclesearch/search/fr-fr/stocklocator";
 const USED_CAR_URL: &str = "https://stolo-data-service.prod.stolo.eu-central-1.aws.bmw.cloud/vehiclesearch/search/fr-fr/stocklocator_uc";
 const MAX_RESULT: u32 = 50;
 const CONCURRENT_REQUESTS: usize = 5;
 
-fn build_search_url(
-    condition: Condition,
-    max_result: u32,
-    start_index: Option<u32>,
-) -> Result<Url> {
-    let base_url = match condition {
-        Condition::New => NEW_CAR_URL,
-        Condition::Used => USED_CAR_URL,
-    };
+// === Public API ===
 
-    let params = [
-        ("brand", "BMW"),
-        (
-            "maxResults",
-            match max_result {
-                x if x > MAX_RESULT => &MAX_RESULT.to_string(),
-                x => &x.to_string(),
-            },
-        ),
-        (
-            "startIndex",
-            match start_index {
-                Some(x) => &x.to_string(),
-                None => "0",
-            },
-        ),
-    ];
-
-    Url::parse_with_params(base_url, &params).map_err(anyhow::Error::from)
-}
-
-#[derive(Serialize, Clone)]
-struct SearchRequest {
-    #[serde(rename = "searchContext")]
-    search_context: Vec<SearchContext>,
-
-    #[serde(rename = "resultsContext", skip_serializing_if = "Option::is_none")]
-    results_context: Option<ResultsContext>,
-}
-
-#[derive(Serialize, Clone)]
-struct SearchContext {
-    #[serde(rename = "model", skip_serializing_if = "Option::is_none")]
-    model: Option<SearchModel>,
-
-    #[serde(rename = "vssIds", skip_serializing_if = "Option::is_none")]
-    vss_ids: Option<FilterWithValues>,
-}
-
-#[derive(Serialize, Clone)]
-struct SearchModel {
-    #[serde(rename = "marketingModelRange")]
-    marketing_model_range: FilterWithValues,
-}
-
-#[derive(Serialize, Clone)]
-struct FilterWithValues {
-    #[serde(rename = "value")]
-    value: Vec<String>,
-}
-
-#[derive(Serialize, Clone)]
-struct ResultsContext {
-    sort: Vec<Sort>,
-}
-#[derive(Serialize, Clone, Copy)]
-struct Sort {
-    by: SortBy,
-    order: SortOrder,
-}
-
-#[derive(Serialize, Clone, Copy)]
-enum SortBy {
-    #[serde(rename = "PRICE")]
-    Price,
-}
-
-#[derive(Serialize, Clone, Copy)]
-#[allow(dead_code)]
-enum SortOrder {
-    #[serde(rename = "ASC")]
-    Asc,
-    #[serde(rename = "DESC")]
-    Desc,
-}
-
-#[derive(Deserialize)]
-struct SearchResponse {
-    metadata: Metadata,
-    hits: Vec<Hit>,
-}
-
-#[derive(Deserialize)]
-struct Metadata {
-    #[serde(rename = "totalCount")]
-    total_count: u32,
-}
-
-#[derive(Deserialize)]
-#[allow(dead_code)]
-struct Hit {
-    country: String,
-    score: f32,
-    vehicle: Vehicle,
-}
-
+/// Search vehicles according to the configuration.
 pub async fn search(configuration: &Configuration) -> Result<HashMap<uuid::Uuid, Vehicle>> {
     let client = Client::new();
     let request_body: SearchRequest = SearchRequest {
@@ -171,6 +71,7 @@ pub async fn search(configuration: &Configuration) -> Result<HashMap<uuid::Uuid,
     Ok(vehicles_map)
 }
 
+/// Search a vehicle by its VSS ID.
 #[allow(dead_code)]
 pub async fn search_by_vss_id(
     configuration: &Configuration,
@@ -197,6 +98,39 @@ pub async fn search_by_vss_id(
         }
         _ => Err(anyhow::anyhow!("Unexpected response format")),
     }
+}
+
+// === Private helpers ===
+
+fn build_search_url(
+    condition: Condition,
+    max_result: u32,
+    start_index: Option<u32>,
+) -> Result<Url> {
+    let base_url = match condition {
+        Condition::New => NEW_CAR_URL,
+        Condition::Used => USED_CAR_URL,
+    };
+
+    let params = [
+        ("brand", "BMW"),
+        (
+            "maxResults",
+            match max_result {
+                x if x > MAX_RESULT => &MAX_RESULT.to_string(),
+                x => &x.to_string(),
+            },
+        ),
+        (
+            "startIndex",
+            match start_index {
+                Some(x) => &x.to_string(),
+                None => "0",
+            },
+        ),
+    ];
+
+    Url::parse_with_params(base_url, &params).map_err(anyhow::Error::from)
 }
 
 async fn query_search(
@@ -268,6 +202,8 @@ fn determine_calls_needed(
         })
         .collect()
 }
+
+// --- Tests ---
 
 #[cfg(test)]
 mod tests {

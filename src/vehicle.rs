@@ -1,3 +1,6 @@
+//! Vehicle module for the BMW Finder application.
+//! Contains the Vehicle struct, related data structures, and associated methods.
+
 use core::str;
 use std::collections::HashMap;
 
