@@ -5,8 +5,8 @@ use itertools::Itertools;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
+use crate::bmw::search::search;
 use crate::config::{Condition, Configuration, OutputMode};
-use crate::search::search;
 use crate::vehicle::Vehicle;
 
 /// Runs the legacy (text/json) mode of the application.

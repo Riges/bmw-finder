@@ -3,8 +3,8 @@
 
 use std::collections::HashMap;
 
+use crate::bmw::search::search;
 use crate::config::Configuration;
-use crate::search::search;
 use crate::vehicle::Vehicle;
 
 /// Runs the UI mode of the application.

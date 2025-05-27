@@ -2,9 +2,9 @@
 //! Routes to legacy (text/json) or app (UI) mode depending on configuration.
 
 mod app;
+mod bmw;
 mod config;
 mod legacy;
-mod search;
 mod vehicle;
 
 use config::{OutputMode, load_config};

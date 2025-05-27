@@ -1,3 +1,6 @@
+//! Configuration module for the BMW Finder application.
+//! Handles CLI argument parsing, configuration struct, and output mode logic.
+
 use clap::Parser;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
