@@ -93,6 +93,8 @@ pub fn print_text_output(vehicles: &[&Vehicle]) {
 
 /// Displays the list of vehicles in JSON format.
 pub fn print_json_output(vehicles: &[&Vehicle]) {
-    let json = serde_json::to_string_pretty(vehicles).unwrap();
-    println!("{}", json);
+    match serde_json::to_string_pretty(vehicles) {
+        Ok(json) => println!("{}", json),
+        Err(e) => eprintln!("Failed to serialize vehicles to JSON: {}", e),
+    }
 }
